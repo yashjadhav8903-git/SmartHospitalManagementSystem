@@ -4,6 +4,7 @@ import com.example.HospitalManagement.Enums.PermissionType;
 import com.example.HospitalManagement.Enums.RolesType;
 import com.example.HospitalManagement.OAuth2Google.AuthProviderType;
 import com.example.HospitalManagement.SpringSecurity.RolePermissionMapping;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,7 +45,7 @@ public class UserEntity implements UserDetails {
 
 
 
-
+    @JsonIgnore
     @ElementCollection(fetch = FetchType.EAGER)  //--> should be retrieved from the database immediately when the parent entity is loaded.
     @Enumerated(EnumType.STRING)
     Set<RolesType> roles = new HashSet<>();

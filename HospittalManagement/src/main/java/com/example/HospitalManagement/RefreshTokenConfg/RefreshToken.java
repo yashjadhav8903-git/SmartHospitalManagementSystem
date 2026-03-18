@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.time.Instant;
 
@@ -14,7 +15,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class  RefreshToken {
+public class RefreshToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +24,7 @@ public class  RefreshToken {
     private Instant expiredDate;
 
     @OneToOne
+    @JsonIgnore
     @JoinColumn(name = "user_id",referencedColumnName = "id")
     private UserEntity userEntity;
 

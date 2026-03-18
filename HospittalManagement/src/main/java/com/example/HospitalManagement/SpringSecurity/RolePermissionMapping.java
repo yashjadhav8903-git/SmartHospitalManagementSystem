@@ -16,7 +16,7 @@ public class RolePermissionMapping {
 
     // Role ko permission se map kr rahe hai 😌
     private static final Map<RolesType,Set<PermissionType>> map = Map.of(     //---> Role or Uske permissions ka set
-            PATIENT, Set.of(PATIENT_READ,APPOINTMENT_READ,APPOINTMENT_WRITE), // Patient ke pass konn konshi permission hai
+            PATIENT, Set.of(PATIENT_READ,APPOINTMENT_READ,APPOINTMENT_WRITE,PATIENT_WRITE), // Patient ke pass konn konshi permission hai
             DOCTOR, Set.of(APPOINTMENT_READ,APPOINTMENT_WRITE,REPORT_VIEW),   // Doctor ke pass konn konshi permission hai
             ADMIN, Set.of(PATIENT_WRITE,PATIENT_DELETE,PATIENT_READ,APPOINTMENT_WRITE,APPOINTMENT_READ,APPOINTMENT_DELETE,
                     USER_MANAGE,REPORT_VIEW,INSURANCE_READ, INSURANCE_OPEARTIONS,DOCTOR_ASSIGN,DOCTOR_WRITE,DOCTOR_READ,DOCTOR_DELETE,DEPARTMENT_OPERATIONS)  // Admin ke pass konn konshi permission hai

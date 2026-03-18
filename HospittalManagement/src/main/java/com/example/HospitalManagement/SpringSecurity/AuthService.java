@@ -8,10 +8,8 @@ import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.RolesType;
 import com.example.HospitalManagement.OAuth2Google.AuthProviderType;
-import com.example.HospitalManagement.RefreshTokenConfg.RefreshRequestDTO;
-import com.example.HospitalManagement.RefreshTokenConfg.RefreshToken;
-import com.example.HospitalManagement.RefreshTokenConfg.RefreshTokenRepository;
-import com.example.HospitalManagement.RefreshTokenConfg.RefreshTokenService;
+import com.example.HospitalManagement.Redis.RedisService;
+import com.example.HospitalManagement.RefreshTokenConfg.*;
 import com.example.HospitalManagement.Repository.PatientRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +39,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PatientRepository patientRepository;
+    private final RedisService redisService;
 
     // 2. Login flow( match username and password )
     @Transactional
@@ -57,7 +56,7 @@ public class AuthService {
             // get token from AuthJwtUtil
             String Token = authJwtUtil.generateAccessToken(userEntity);
             // jwt token ke sath refreshtoken UUID me mile
-            RefreshToken refreshToken = refreshTokenService.CreateRefreshToken(userEntity.getUsername());
+            RefreshTokenRedisDTO refreshToken = refreshTokenService.CreateRefreshToken(userEntity.getUsername());
 
 
             // return jwtToken and userId
@@ -122,15 +121,20 @@ public class AuthService {
     public LoginResponseDTO refresh(RefreshRequestDTO request) {
 
         // 1. frontent ne jo token bheja hai usko find krta hai . ager hai toh sahi varna exception throw krta hai.
-        RefreshToken oldToken = (RefreshToken) refreshTokenRepository.findBytoken(request.getRefreshToken()).
-                orElseThrow(() -> new RuntimeException("Invalid Refresh Token"));
+        RefreshTokenRedisDTO oldToken = refreshTokenService.getTokenFromRedisOrDB(request.getRefreshToken());
 
         // 2. this token still valid or not
         refreshTokenService.verifyExpired(oldToken);
+        // 🔄 Rotation (Ab ye hume naya DTO dega)
+        RefreshTokenRedisDTO newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
         // 3. get user from oldToken
-        UserEntity user = oldToken.getUserEntity();
-        // 4. Create New RefreshToken
-        RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
+        // 3. UserEntity nikalne ka sahi tarika (Repository se fetch karo)
+        // oldToken.getUsername() ya oldToken.getUserId() use karke DB hit karo
+        UserEntity user = userRepository.findById(newRefreshToken.getId());
+        // 🔥 LAZY FIX
+//        user.getRoles().size();
+        // 4. Rotate New RefreshToken
+//        RefreshTokenRedisDTO newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
         // 5. Generate NewAccessToken
         String NewAccessToken = authJwtUtil.generateAccessToken(user);
         // 6. User ko naya Access token aur wahi purana Refresh token wapas bhej diya jata hai.

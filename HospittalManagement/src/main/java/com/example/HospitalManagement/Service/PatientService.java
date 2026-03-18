@@ -4,6 +4,7 @@ package com.example.HospitalManagement.Service;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Entity.Patient;
+import com.example.HospitalManagement.Enums.RolesType;
 import com.example.HospitalManagement.MapStruct.PatientMapper;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryPage;
@@ -12,6 +13,7 @@ import com.example.HospitalManagement.SpringSecurity.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 
@@ -50,7 +53,8 @@ public class PatientService {
         @Cacheable(cacheNames = "patient",key = "#patientid")
         @PreAuthorize("hasAuthority('Patient:Read') and #patientid == authentication.principal.id")
         public AllPatientDTO getPatientById(Integer patientid) throws Exception {
-            System.out.println("🔥 DATABASE HIT - Fetching from DB");
+        log.info("Fetching Patient with ID: {}",patientid);
+            System.out.println("🔥 DATABASE HIT - Fetching Patient for PatientId : " + patientid);
         Patient patients = patientRepository.findById(patientid).orElseThrow(()->
                 new Exception("Patient Not Found at this Patient Id" + patientid));
         return (AllPatientDTO) modelMapper
@@ -61,8 +65,7 @@ public class PatientService {
     // --> Post mapping
     @Transactional
     @CacheEvict(cacheNames = "patient",allEntries = true)
-//    @PreAuthorize("hasAuthority('Patient:Write')")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Patient:Write')")
     public PatientPostResponseDTO Newpatient(PatientPostRequestDTO patientPostRequestDTO,UserEntity adminUser){
         //1
         UserEntity user = userRepository.findById(adminUser.getId());
@@ -70,8 +73,12 @@ public class PatientService {
             throw new RuntimeException("Patient already exists for this user");
         }
         Patient NewPatient = patientMapper.userToEnity(patientPostRequestDTO);
-        NewPatient.setUserEntity(user); // -->
+        NewPatient.setUserEntity(user);
+        NewPatient.setCreatedBy(adminUser); // -->
         Patient patient = patientRepository.save(NewPatient);
+        // upgrade role
+        user.getRoles().add(RolesType.PATIENT);
+        userRepository.save(user);
 //        normalEmailService.sendHtmlEmail(patient.getEmail(),patient.getName());
         return patientMapper.EntityToUser(patient);
 

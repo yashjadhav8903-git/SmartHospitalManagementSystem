@@ -14,7 +14,10 @@ import com.example.HospitalManagement.Repository.DoctorRepository;
 import com.example.HospitalManagement.SpringSecurity.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
@@ -36,9 +40,11 @@ public class DoctorService {
 
     // --> projection + Pageable + byDoctorById
     @Transactional
+    @Cacheable(cacheNames = "doctors" , key = "#id + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @PreAuthorize("hasAuthority('Doctor:Read') and #id == authentication.principal.id")
     public Page<DoctorResponseDTOView> getDoctorsById(Integer id , Pageable pageable){
-        System.out.println("🔥 DATABASE HIT - Fetching from DB");
+        log.info("Fetching Doctor with ID: {}",id);
+        System.out.println("🔥 DATABASE HIT - Fetching Doctor from DB" + id);
         Page<DoctorProjectionView> page = doctorRepository.findById(id,pageable);
         return page .map( doctor -> new DoctorResponseDTOView(
                     doctor.getId(),
@@ -83,6 +89,7 @@ public class DoctorService {
 
     // --> Create Doctor / add Doctor to Database
     @Transactional
+    @CacheEvict(cacheNames = "doctors",allEntries = true)
     @PreAuthorize("hasAuthority('Doctor:Write')")
     public DoctorPOSTResponseDTO onBoardDooctor(DoctorPOSTRequestDTO doctorPOSTRequestDTO){
         UserEntity userEntity = userRepository.findById(doctorPOSTRequestDTO.getUserId());
