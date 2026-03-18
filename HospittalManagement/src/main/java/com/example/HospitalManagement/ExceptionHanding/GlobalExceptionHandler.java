@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiError> handleEntityNotFoundException (EntityNotFoundException entityNotFoundException){
-        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND,"Hibernate Error : " + entityNotFoundException.getMessage());
+        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND,"Hibernate Error EntityNotFound : " + entityNotFoundException.getMessage());
         return new ResponseEntity<>(apiError,HttpStatus.NOT_FOUND);
     }
 

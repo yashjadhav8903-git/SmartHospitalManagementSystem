@@ -1,11 +1,9 @@
 package com.example.HospitalManagement.Controller;
 
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.LoginRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.LoginResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.SignUpRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.SignUpResponseDTO;
+import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.*;
 import com.example.HospitalManagement.RefreshTokenConfg.RefreshRequestDTO;
 import com.example.HospitalManagement.SpringSecurity.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,5 +34,12 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponseDTO> refresh(@RequestBody RefreshRequestDTO request) {
         return ResponseEntity.ok(authService.refresh(request));
+    }
+
+    // Logout Controller
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequestDTO logoutRequestDTO){
+        authService.logout(logoutRequestDTO.getRefreshToken());
+        return ResponseEntity.ok("Logged out successfully");
     }
 }

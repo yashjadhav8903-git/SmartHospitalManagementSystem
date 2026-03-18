@@ -95,16 +95,7 @@ public class AuthService {
         // --> user ko save kiya kyu ager user hoga tabhi toh patient banega na. he signup as user than i decide his roles like Patient,Doctor or Admin
         userEntity = userRepository.save(userEntity);
 
-                // --> build that patient
-//        Patient patient = Patient.builder()
-//                .name(signupRequestDTO.getName())
-//                .email(signupRequestDTO.getUsername())
-//                .userEntity(userEntity)
-//                .build();
-//        // Save patient
-//        patientRepository.save(patient);
-
-        // return
+        // return userEntity
         return userEntity;
     }
 
@@ -113,6 +104,12 @@ public class AuthService {
     public SignUpResponseDTO signup(SignUpRequestDTO singupRequestDTO){
         UserEntity userEntity = signupInternal(singupRequestDTO,AuthProviderType.EMAIL,null);
         return new SignUpResponseDTO(userEntity.getId(), userEntity.getUsername());
+    }
+
+    // Logout Flow
+    @Transactional
+    public void logout(String refreshToken){
+        refreshTokenService.deleteToken(refreshToken);
     }
 
 

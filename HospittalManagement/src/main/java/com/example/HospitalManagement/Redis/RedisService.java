@@ -27,15 +27,6 @@ public class RedisService {
     public void SaveToRedis(RefreshTokenRedisDTO refreshToken){
         String Key = getKey(refreshToken.getToken());
 
-//        // Isliye ki Redis Direct RefreshToken Entity ke Data na le.
-//        RefreshTokenRedisDTO refreshTokenRedisDTO = new RefreshTokenRedisDTO();
-//        refreshTokenRedisDTO.setId(refreshToken.getUserEntity().getId());
-//        refreshTokenRedisDTO.setToken(refreshToken.getToken());
-//        refreshTokenRedisDTO.setExpiredDate(refreshToken.getExpiredDate());
-//        refreshTokenRedisDTO.setUsername(refreshToken.getUserEntity().getUsername());
-
-
-
         redisTemplate.opsForValue().
                 set(
                 Key,
@@ -63,4 +54,6 @@ public class RedisService {
         String Key = getKey(token);
         redisTemplate.delete(Key);
     }
+
+
 }
