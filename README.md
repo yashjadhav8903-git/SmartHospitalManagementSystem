@@ -75,6 +75,7 @@ spring.redis.port=6379
 
 
   ### 3️⃣ Run the application
+mvn spring-boot:run
 ```
 mvn spring-boot:run
 
@@ -110,10 +111,11 @@ OAuth aur Email ke liye ye variables set karein:
 
         ## 💡 Highlights
 
+
 * Implemented **Redis-based session management**
-        * Designed **secure authentication system**
-        * Followed **clean architecture principles**
-        * Built with **scalability in mind**
+* Designed **secure authentication system**
+* Followed **clean architecture principles**
+* Built with **scalability in mind**
 
         ---
 
