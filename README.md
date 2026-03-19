@@ -4,7 +4,7 @@ A backend-based Hospital Management System built using **Spring Boot**, focusing
 
 ---
 
-   ## 🚀 Features
+        ## 🚀 Features
 
 * 🔐 JWT Authentication (Login / Signup)
 * 🔄 Refresh Token Implementation
@@ -18,7 +18,7 @@ A backend-based Hospital Management System built using **Spring Boot**, focusing
 
 ---
 
-  ## 🛠️ Tech Stack
+        ## 🛠️ Tech Stack
 
 * **Language:** Java 17+
         * **Framework:** Spring Boot 3.x
@@ -53,10 +53,9 @@ src/
 ```
 git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.git
 cd your-repo-name
+```
 
-
-   ### 2️⃣ Configure application.yml
-   
+        ### 2️⃣ Configure application.yml
 spring:
 datasource:
 url: jdbc:postgresql://localhost:5432/hms_db
@@ -74,18 +73,19 @@ spring.redis.host=localhost
 spring.redis.port=6379
         ```
 
+        ---
 
-### 3️⃣ Run the application
+        ### 3️⃣ Run the application
 
+```
 mvn spring-boot:run
+```
 
-
-
-   ## 4️⃣ Environment Variables:
-   
+        ---
+        ## 4️⃣ Environment Variables:
 OAuth aur Email ke liye ye variables set karein:
 
-1. GOOGLE_CLIENT_ID
+        1. GOOGLE_CLIENT_ID
 2. GOOGLE_CLIENT_SECRET
 3. EMAIL_PASSWORD (App Password)
 
@@ -99,18 +99,18 @@ OAuth aur Email ke liye ye variables set karein:
 
 ---
 
-   ## 📌 API Endpoints (Sample)
+        ## 📌 API Endpoints (Sample)
 
-  | Method | Endpoint          | Description |
-  | ------ | ----------------- | ----------- |
-  | POST   | /auth/v5/login    | User login  |
-  | POST   | /auth/v5/register | User signup |
-  | POST   | /auth/v5/refresh  | Refresh JWT |
-  | POST   | /auth/v5/logout   | Logout user |
+| Method | Endpoint          | Description |
+        | ------ | ----------------- | ----------- |
+        | POST   | /auth/v5/login    | User login  |
+        | POST   | /auth/v5/register | User signup |
+        | POST   | /auth/v5/refresh  | Refresh JWT |
+        | POST   | /auth/v5/logout   | Logout user |
 
-    
+        ---
 
-   ## 💡 Highlights
+        ## 💡 Highlights
 
 * Implemented **Redis-based session management**
         * Designed **secure authentication system**
@@ -119,7 +119,7 @@ OAuth aur Email ke liye ye variables set karein:
 
         ---
 
- ## 📈 Future Improvements
+        ## 📈 Future Improvements
 
 - 🌐 Deploy the application on cloud platforms (AWS / Render / Railway)
 - 🚀 Make APIs live and accessible over the web
@@ -127,9 +127,12 @@ OAuth aur Email ke liye ye variables set karein:
 
 ---
 
-## 👨‍💻 Author
+        ## 👨‍💻 Author
+
 **Yash Jadhav**
 
         ---
 
         ⭐ If you like this project, give it a star!
+
+        ---
