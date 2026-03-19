@@ -77,13 +77,13 @@ spring.redis.port=6379
   ### 3️⃣ Run the application
 ```
 mvn spring-boot:run
-```
 
-        ---
-        ## 4️⃣ Environment Variables:
+
+        
+## 4️⃣ Environment Variables:
 OAuth aur Email ke liye ye variables set karein:
 
-        1. GOOGLE_CLIENT_ID
+1. GOOGLE_CLIENT_ID
 2. GOOGLE_CLIENT_SECRET
 3. EMAIL_PASSWORD (App Password)
 
@@ -125,8 +125,7 @@ OAuth aur Email ke liye ye variables set karein:
 
 ---
 
-        ## 👨‍💻 Author
-
+ ## 👨‍💻 Author
 **Yash Jadhav**
 
         ---
