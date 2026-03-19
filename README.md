@@ -21,7 +21,7 @@ A backend-based Hospital Management System built using **Spring Boot**, focusing
         ## 🛠️ Tech Stack
 
 * **Language:** Java 17+
-        * **Framework:** Spring Boot 3.x
+* **Framework:** Spring Boot 3.x
 * **Security:** Spring Security, JWT, OAuth2
 * **Database:** MySQL
 * **Caching:** Redis
@@ -51,7 +51,7 @@ src/
 ### 1️⃣ Clone the repository
 
 ```
-git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.git
+git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.git <br>
 cd your-repo-name
 ```
 
