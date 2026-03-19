@@ -74,9 +74,7 @@ spring.redis.port=6379
         ```
 
         ---
-
-        ### 3️⃣ Run the application
-
+  ### 3️⃣ Run the application
 ```
 mvn spring-boot:run
 ```
