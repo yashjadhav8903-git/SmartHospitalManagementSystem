@@ -99,7 +99,7 @@ OAuth aur Email ke liye ye variables set karein:
 
         ## 📌 API Endpoints (Sample)
 
-| Method | Endpoint          | Description |
+        | Method | Endpoint          | Description |
         | ------ | ----------------- | ----------- |
         | POST   | /auth/v5/login    | User login  |
         | POST   | /auth/v5/register | User signup |
