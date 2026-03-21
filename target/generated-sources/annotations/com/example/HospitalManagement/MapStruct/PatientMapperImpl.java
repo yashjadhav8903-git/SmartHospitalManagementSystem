@@ -1,6 +1,7 @@
 package com.example.HospitalManagement.MapStruct;
 
 import com.example.HospitalManagement.Entity.DTO.InsurancesDTO.InsuranceResponseDTO;
+import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AllPatientDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientInsuranceResponseDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostRequestDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostResponseDTO;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-03-16T21:19:25+0530",
+    date = "2026-03-21T23:42:39+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Microsoft)"
 )
 @Component
@@ -78,6 +79,43 @@ public class PatientMapperImpl implements PatientMapper {
         patient.email( patientPostRequestDTO.getEmail() );
         patient.birthdate( patientPostRequestDTO.getBirthdate() );
         patient.gender( patientPostRequestDTO.getGender() );
+
+        return patient.build();
+    }
+
+    @Override
+    public AllPatientDTO patientToDTO(Patient patient) {
+        if ( patient == null ) {
+            return null;
+        }
+
+        AllPatientDTO allPatientDTO = new AllPatientDTO();
+
+        allPatientDTO.setId( patient.getId() );
+        allPatientDTO.setName( patient.getName() );
+        allPatientDTO.setEmail( patient.getEmail() );
+        allPatientDTO.setBirthdate( patient.getBirthdate() );
+        allPatientDTO.setGender( patient.getGender() );
+        allPatientDTO.setCreatedAt( patient.getCreatedAt() );
+        allPatientDTO.setBloodGroup( patient.getBloodGroup() );
+
+        return allPatientDTO;
+    }
+
+    @Override
+    public Patient patientToEntity(AllPatientDTO allPatientDTO) {
+        if ( allPatientDTO == null ) {
+            return null;
+        }
+
+        Patient.PatientBuilder patient = Patient.builder();
+
+        patient.id( allPatientDTO.getId() );
+        patient.name( allPatientDTO.getName() );
+        patient.email( allPatientDTO.getEmail() );
+        patient.birthdate( allPatientDTO.getBirthdate() );
+        patient.gender( allPatientDTO.getGender() );
+        patient.createdAt( allPatientDTO.getCreatedAt() );
 
         return patient.build();
     }

@@ -33,7 +33,7 @@ public class AuthJwtUtil {
                 .setSubject(userEntity.getUsername())
                 .claim("UserId",userEntity.getId().toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*1))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*20))
                 .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

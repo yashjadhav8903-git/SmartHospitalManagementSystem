@@ -69,7 +69,6 @@ public class AuthService {
     @Transactional
     public UserEntity signupInternal(SignUpRequestDTO signupRequestDTO, AuthProviderType authProviderType, String providerId) {
 
-
         // 1. Check karo ki user pehle se DB mein hai ya nahi
         UserEntity userEntity = userRepository.findByUsername(signupRequestDTO.getUsername()).orElse(null);
 

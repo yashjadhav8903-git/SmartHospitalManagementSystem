@@ -187,7 +187,7 @@ public class AppointmentService {
 
     //---> getAppointmentWithProjection
     @Transactional
-    @Cacheable(cacheNames = "appointments" , key = "#doctorId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Cacheable(cacheNames = "appointments" , key = "#'doctorId:' + #pageable.pageNumber + ':' + #pageable.pageSize ")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and #doctorId == authentication.principal.id)")  //---> Ye hi hota hai Ownership Based Access Control
     public Page<AppointmentResponseDTO> getAppointments(Pageable pageable,Integer doctorId){
         System.out.println("🔥 DATABASE HIT - Fetching from DB");

@@ -1,9 +1,11 @@
 package com.example.HospitalManagement.Repository;
 
 import com.example.HospitalManagement.Entity.DTO.BloodGroupCountResponseEntity;
+import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AllPatientDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPageResponseDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientResponseConstructorDTO;
 import com.example.HospitalManagement.Entity.Patient;
+import com.example.HospitalManagement.Projection.ForPatients.GetAllPatientProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryPage;
 import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryProjection;
@@ -58,11 +60,13 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
 //
 //    --> Native Query
 //     --> FindAllPatient
-    @Query(value = "select * from Patient", nativeQuery = true)
+//    @Query(value = "select * from Patient", nativeQuery = true)
 //    List<Patient> findAllPatient();
 
     //--> Pagination
-    Page<Patient> findAllPatient(Pageable pageable);
+    Page<Patient> findAll(Pageable pageable);
+
+
     Page<Patient>findById(Integer id,Pageable pageable);
 
 

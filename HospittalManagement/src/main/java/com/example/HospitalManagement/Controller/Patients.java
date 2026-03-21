@@ -29,8 +29,8 @@ public class Patients {
 
 
     @GetMapping("/getPatients")
-    public ResponseEntity<List<AllPatientDTO>> getAllPatient(){
-        return ResponseEntity.ok(patientService.getAllPatient());
+    public ResponseEntity<Page<AllPatientDTO>> getAllPatient(Pageable pageable){
+        return ResponseEntity.ok(patientService.getAllPatient(pageable));
     }
 
     @GetMapping("/patient/{patientid}")

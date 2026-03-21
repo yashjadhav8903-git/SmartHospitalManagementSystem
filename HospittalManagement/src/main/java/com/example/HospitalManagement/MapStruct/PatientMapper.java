@@ -1,9 +1,13 @@
 package com.example.HospitalManagement.MapStruct;
 
+import com.example.HospitalManagement.Entity.DTO.DepartmentsDTO.DoctorResponseDeptDTO;
+import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AllPatientDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientInsuranceResponseDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostRequestDTO;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostResponseDTO;
 import com.example.HospitalManagement.Entity.Patient;
+import com.example.HospitalManagement.Projection.ForDepartments.DoctorProjectionDTO;
+import com.example.HospitalManagement.Projection.ForPatients.GetAllPatientProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -35,4 +39,10 @@ public interface PatientMapper {
     PatientPostResponseDTO EntityToUser(Patient patient);
 
     Patient userToEntity(PatientPostRequestDTO patientPostRequestDTO);
+
+    // DTO To PatientEntity
+    AllPatientDTO patientToDTO(Patient patient);
+    // PatientEntity to DTO
+    Patient patientToEntity(AllPatientDTO allPatientDTO);
+
 }

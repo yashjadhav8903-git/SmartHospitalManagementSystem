@@ -6,6 +6,7 @@ import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.RolesType;
 import com.example.HospitalManagement.MapStruct.PatientMapper;
+import com.example.HospitalManagement.Projection.ForPatients.GetAllPatientProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryPage;
 import com.example.HospitalManagement.Repository.PatientRepository;
@@ -25,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,12 +43,13 @@ public class PatientService {
 
     @Transactional
     @PreAuthorize("hasAuthority('Patient:Read')")
-    public List<AllPatientDTO> getAllPatient(){
-            List<Patient> patients = patientRepository.findAll();
-            return patients.
-                    stream()
-                    .map(patient -> modelMapper.map(patient,AllPatientDTO.class))
-                    .toList();
+    @Cacheable(cacheNames = "patients", key = "'patients:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",  //#pageable.sort object hai → serialization inconsistent ho sakti hai
+            condition = "#pageable.pageNumber < 5")
+    public Page<AllPatientDTO> getAllPatient(Pageable pageable){
+        log.info("Fetching database from : {}", pageable);
+        System.out.println("🔥 DATABASE HIT - Fetching from DB");
+        Page<Patient> patients = patientRepository.findAll(pageable);
+            return patients.map(patientMapper::patientToDTO);
     }
 
         @Transactional
@@ -57,8 +60,7 @@ public class PatientService {
             System.out.println("🔥 DATABASE HIT - Fetching Patient for PatientId : " + patientid);
         Patient patients = patientRepository.findById(patientid).orElseThrow(()->
                 new Exception("Patient Not Found at this Patient Id" + patientid));
-        return (AllPatientDTO) modelMapper
-                .map(patients,AllPatientDTO.class);
+        return patientMapper.patientToDTO(patients);
         }
 
 

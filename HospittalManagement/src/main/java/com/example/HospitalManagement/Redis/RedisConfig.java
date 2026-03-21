@@ -4,17 +4,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Configuration
+@Builder
 public class RedisConfig {
 
     @Bean
@@ -57,6 +66,37 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(serializer);
 
         return redisTemplate;
+    }
+
+
+    @Bean
+    public RedisCacheManager cacheManager (RedisConnectionFactory redisConnectionFactory){
+
+        //Agar kisi cache ka special config nahi mila ( Ager maine jo Add kiye hai Appointment,patient,doctor ke alawa koi or redis me hoga toh )
+        RedisCacheConfiguration defualtCache = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(10))   // --> Jo dusra Data 10 minute h rahega
+                .disableCachingNullValues()         // --> Ager DB se null data aa raha ho toh wo Redis Store nahi hoga.
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));  // java object -> JSON format me convert hoga , Redis me readable format me store hoga.
+
+        // Humne bs Key-Value store krni hai bs isliye Hashmap Eazy to use hai.
+        Map<String, RedisCacheConfiguration> configMap = new HashMap<>();  //--> Har cache ke liye alag TTL define kar raha hai
+
+        // 1 .Auto TTL for Appointment
+        configMap.put("appointments",
+                defualtCache.entryTtl(Duration.ofMinutes(15)));  // 15 minutes ke baad redis se data delete hoga
+
+        // 2 .Auto TTL Doctor
+        configMap.put("doctors",
+                defualtCache.entryTtl(Duration.ofHours(2)));     // 2 hours ke baad redis se data delete hoga
+
+        // 3 .Auto TTL patient
+        configMap.put("patients",
+                defualtCache.entryTtl(Duration.ofHours(3)));     // 3 hours ke baad redis se data delete hoga
+
+        return RedisCacheManager.builder(redisConnectionFactory)
+                .cacheDefaults(defualtCache)  // --> // Default config for others
+                .withInitialCacheConfigurations(configMap)  //--> let Spring boot know ki configMap ignore na kre .Jo specific cache settings tu ne map me define ki hai (appointments, patients, doctors), unko apply kar do”
+                .build();
     }
 }
 
