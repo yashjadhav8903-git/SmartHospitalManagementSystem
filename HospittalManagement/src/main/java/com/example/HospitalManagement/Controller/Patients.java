@@ -3,6 +3,7 @@ package com.example.HospitalManagement.Controller;
 import com.example.HospitalManagement.Entity.DTO.PatientsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryPage;
+import com.example.HospitalManagement.Redis.PageResponseDTO;
 import com.example.HospitalManagement.Service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -29,8 +30,8 @@ public class Patients {
 
 
     @GetMapping("/getPatients")
-    public ResponseEntity<Page<AllPatientDTO>> getAllPatient(Pageable pageable){
-        return ResponseEntity.ok(patientService.getAllPatient(pageable));
+    public ResponseEntity<PageResponseDTO<AllPatientDTO>> getAllPatient(Pageable pageable){
+        return ResponseEntity.ok((PageResponseDTO<AllPatientDTO>) patientService.getAllPatient(pageable));
     }
 
     @GetMapping("/patient/{patientid}")
@@ -43,7 +44,7 @@ public class Patients {
     @PostMapping("/add")
     public ResponseEntity<PatientPostResponseDTO> NewPatient(@AuthenticationPrincipal UserEntity adminUser,
                                                              @RequestBody PatientPostRequestDTO patientPostRequestDTO){
-        return ResponseEntity.status(HttpStatus.CREATED).body(patientService.Newpatient(patientPostRequestDTO,adminUser));
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientService.NewPatient(patientPostRequestDTO,adminUser));
     }
 
 //    // Interface Page by ID

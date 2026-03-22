@@ -11,8 +11,7 @@ import org.mapstruct.Mapper;
 
 
 @Mapper(componentModel = "spring")
-public interface
-DoctorMapper {
+public interface DoctorMapper {
 
     //1. --> Doctor projection(Entity) to DoctorResponseDTO (Get)
     DoctorResponseDeptDTO DoctorToDTO(DoctorProjectionDTO doctor);

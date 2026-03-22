@@ -40,7 +40,7 @@ public class DoctorService {
 
     // --> projection + Pageable + byDoctorById
     @Transactional
-    @Cacheable(cacheNames = "doctors" , key = "#id + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+        @Cacheable(cacheNames = "doctors" , key = "#id + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @PreAuthorize("hasAuthority('Doctor:Read') and #id == authentication.principal.id")
     public Page<DoctorResponseDTOView> getDoctorsById(Integer id , Pageable pageable){
         log.info("Fetching Doctor with ID: {}",id);
@@ -95,7 +95,7 @@ public class DoctorService {
         UserEntity userEntity = userRepository.findById(doctorPOSTRequestDTO.getUserId());
 
         if(doctorRepository.existsById(doctorPOSTRequestDTO.getUserId())){
-            throw new IllegalArgumentException("Already exist");
+            throw new IllegalArgumentException("Doctor Already exist");
         }
 
         Doctor doctor = Doctor.builder()

@@ -1,6 +1,7 @@
 package com.example.HospitalManagement.Entity.DTO.PatientsDTO;
 
 import com.example.HospitalManagement.Entity.EntityType.Blood_Group_type;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AllPatientDTO implements Serializable {
-    private static final long serialVersionUID = 1L; // Best practice for versioning
 
     private Integer id ;
     private String name;

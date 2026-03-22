@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-03-21T23:42:39+0530",
+    date = "2026-03-22T19:32:38+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Microsoft)"
 )
 @Component
@@ -84,7 +84,7 @@ public class PatientMapperImpl implements PatientMapper {
     }
 
     @Override
-    public AllPatientDTO patientToDTO(Patient patient) {
+    public AllPatientDTO DTOToPatientEntity(Patient patient) {
         if ( patient == null ) {
             return null;
         }
@@ -103,7 +103,7 @@ public class PatientMapperImpl implements PatientMapper {
     }
 
     @Override
-    public Patient patientToEntity(AllPatientDTO allPatientDTO) {
+    public Patient PatientEntityToDTO(AllPatientDTO allPatientDTO) {
         if ( allPatientDTO == null ) {
             return null;
         }

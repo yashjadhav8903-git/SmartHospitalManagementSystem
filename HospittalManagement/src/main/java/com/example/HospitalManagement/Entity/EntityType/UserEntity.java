@@ -52,6 +52,7 @@ public class UserEntity implements UserDetails {
 
 
     @Override
+    @net.minidev.json.annotate.JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() { // GrantedAuthority is Interface. Ye Spring ka core method hai, Jab user authenticate hota hai,Spring yahi method call karta hai.
 //        return roles.stream()
 //                .map(rolesType -> new SimpleGrantedAuthority("ROLE_" + rolesType.name())) // --> SimpleGrantedAuthority is Implementation of GrantedAuthority.

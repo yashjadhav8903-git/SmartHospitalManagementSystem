@@ -167,7 +167,7 @@ public class GlobalExceptionHandler {
     // 5 . Omniversal Exception ( GOAT of all Exceptions ) 🤣
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception exception){
-        log.error("Exception Request Belongs to : {}" ,exception);
+        log.error("Fetching Data from Redis for Patient Page: {}", exception);
         ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR,"An unexpected error occcured : " + exception.getMessage());
         return new ResponseEntity<>(apiError,HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -26,6 +26,7 @@ import java.util.Map;
 @Builder
 public class RedisConfig {
 
+    ///**Important Note --> RedisTemplate use for manual caching (ex.we Store Refreshtoken manually)
     @Bean
     RedisTemplate<String,Object> Template (RedisConnectionFactory connectionFactory){  //--> Redis Server ke sath Physical Connection ke liye RedisConnectionFactory
         // Store the key and value to redis ( key -> hamesha String , Object -> koi bhi Object ho sakta hai (User,Patient,String also etc)
@@ -68,7 +69,7 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-
+    ///**Important Note --> RedisCacheManager use for Auto caching (ex.Cacheable)
     @Bean
     public RedisCacheManager cacheManager (RedisConnectionFactory redisConnectionFactory){
 
@@ -90,8 +91,8 @@ public class RedisConfig {
                 defualtCache.entryTtl(Duration.ofHours(2)));     // 2 hours ke baad redis se data delete hoga
 
         // 3 .Auto TTL patient
-        configMap.put("patients",
-                defualtCache.entryTtl(Duration.ofHours(3)));     // 3 hours ke baad redis se data delete hoga
+//        configMap.put("patients",
+//                defualtCache.entryTtl(Duration.ofHours(3)));     // 3 hours ke baad redis se data delete hoga
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defualtCache)  // --> // Default config for others

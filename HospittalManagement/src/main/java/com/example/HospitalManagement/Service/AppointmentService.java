@@ -1,6 +1,7 @@
 package com.example.HospitalManagement.Service;
 
 //import com.example.HospitalManagement.EmailServices.NormalEmailService;
+
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
@@ -127,7 +128,7 @@ public class AppointmentService {
         return appointmentMapper.EntityToDTO(saved);
 
 
-        // Email ka Logic
+//        // Email ka Logic
 //        if(saved.getStatus() == AppointmentStatus.CONFIRMED){
 //            System.out.println("Status is CONFIRMED, sending email...");
 //            normalEmailService.SendConfirmedEmail(
