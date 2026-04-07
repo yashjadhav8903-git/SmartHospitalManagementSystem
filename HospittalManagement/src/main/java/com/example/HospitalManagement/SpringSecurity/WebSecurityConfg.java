@@ -41,16 +41,9 @@ public class WebSecurityConfg {
                         sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v5/auth/**").permitAll()
+                                .requestMatchers("/api/A2/schedule/**").permitAll()
                                 .requestMatchers("/ping").permitAll()
                                 .requestMatchers("/secure").authenticated()
-//                        .requestMatchers("/api/A1/Admin/**").hasRole(RolesType.ADMIN.name())
-//                        .requestMatchers(HttpMethod.DELETE,"/api/A1/Admin/**").hasAnyAuthority(PermissionType.APPOINTMENT_DELETE.name()
-//                                ,PermissionType.PATIENT_DELETE.name())
-//                        .requestMatchers("/api/v1/patients/**").hasAnyRole(RolesType.ADMIN.name(), RolesType.PATIENT.name())
-//                        .requestMatchers("/api/v2/appointments/**").hasAnyRole(RolesType.ADMIN.name(),RolesType.DOCTOR.name())  // is appointment controller ko public kr rahe ho
-//                        .requestMatchers("/api/v3/departments/**").hasRole(RolesType.ADMIN.name())
-//                        .requestMatchers("/api/v4/doctors/**").hasAnyRole(RolesType.ADMIN.name(),RolesType.DOCTOR.name())
-//                        .requestMatchers("/api/v6/Insurance/**").hasRole(RolesType.ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

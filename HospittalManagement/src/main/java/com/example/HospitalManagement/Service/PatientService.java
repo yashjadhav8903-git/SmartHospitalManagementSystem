@@ -52,7 +52,7 @@ public class PatientService {
     @PreAuthorize("hasAuthority('Patient:Read')")
     public PageResponseDTO<AllPatientDTO> getAllPatient(Pageable pageable) {
         int pageNumber = pageable.getPageNumber();
-
+        //*** --> patient key is pageNumber
         // only for 5 page caching
         if (pageNumber < 5) {
             String key = "Patient::" + pageNumber + ":" + pageable.getPageSize() + ":" + pageable.getSort().toString();
@@ -69,10 +69,10 @@ public class PatientService {
             Page<Patient> patients = patientRepository.findAll(pageable);
             // 4. Page ko DTO mein convert karo ( kyu ki page ko direct redis me nahi store sakte isliye list me convert kiya
             List<AllPatientDTO> dtoList = patients.getContent()
-                    .stream().map(patientMapper::DTOToPatientEntity)
+                    .stream().map(patientMapper::EntitytoDTO)
                     .toList();
 
-            // save that data tu redis
+            // save that data to PageResponseDTO
             PageResponseDTO<AllPatientDTO> dtoResponse = new PageResponseDTO<>(
                     dtoList,
                     patients.getNumber(),
@@ -80,6 +80,7 @@ public class PatientService {
                     patients.getTotalElements(),
                     patients.getTotalPages()
                     );
+            //Save Data in Redis Cache
             redisTemplate.opsForValue().set(
                     key,  // --> patient key
                     dtoResponse,  //--> set dtorespone instant of entire entity
@@ -91,7 +92,7 @@ public class PatientService {
             // After 5 page Data come for DB
             log.info("Skipping Cache for page : {}", pageNumber);
             Page<Patient> patients = patientRepository.findAll(pageable);
-            return (PageResponseDTO<AllPatientDTO>) patients.map(patientMapper::DTOToPatientEntity);
+            return (PageResponseDTO<AllPatientDTO>) patients.map(patientMapper::EntitytoDTO);
         }
     }
 
@@ -115,7 +116,7 @@ public class PatientService {
         // Fetching Data from Database
         Patient patients = patientRepository.findById(patientid).orElseThrow(() ->
                 new Exception("Patient Not Found at this Patient Id" + patientid));
-        AllPatientDTO allPatientDTO = patientMapper.DTOToPatientEntity(patients);
+        AllPatientDTO allPatientDTO = patientMapper.EntitytoDTO(patients);
 
         // save in redis
         redisTemplate.opsForValue().set(

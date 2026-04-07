@@ -5,37 +5,46 @@ package com.example.HospitalManagement.Service;
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
+import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.MapStruct.AppointmentMapper;
 import com.example.HospitalManagement.Projection.ForAppointmens.AppointmentProjection;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
 import com.example.HospitalManagement.Repository.DoctorRepository;
+import com.example.HospitalManagement.Repository.DoctorSlotRepository;
 import com.example.HospitalManagement.Repository.PatientRepository;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final DoctorSlotRepository doctorSlotRepository;
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
     private final ModelMapper modelMapper;
     private final AppointmentMapper appointmentMapper;
+    private final RedisTemplate redisTemplate;
 //    private final NormalEmailService normalEmailService;
 
 
@@ -93,39 +102,49 @@ public class AppointmentService {
     @CacheEvict(cacheNames = "appointments",allEntries = true)
     @PreAuthorize("hasAuthority('Appointment:Write')")  //--> Ye hi hota hai Ownership Based Access Control
     public CreateAppointmentResponseDTO  CreateNewAppointments(CreateAppointmentRequestDTO requestDTO, Integer doctorId, Integer patientId) throws IllegalAccessException, MessagingException {
-        Doctor doctor = doctorRepository.findById(requestDTO.getDoctorId())
-                .orElseThrow(()-> new RuntimeException("Doctor Not Found at this ID"));
 
-        Patient patient = patientRepository.findById(requestDTO.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient Not Found at this id"));
+        Integer slotId = requestDTO.getSlot();
+            String lockKey = "lock:key:" + slotId;
 
+        // 🔥 1. Try to acquire lock (5 sec expiry)
+            Boolean isLocked = redisTemplate.opsForValue()
+                    .setIfAbsent(lockKey,"locked",5, TimeUnit.SECONDS);
 
-        // ---> AutoAppointmentSet
-        boolean isDoctorIsBusy=
-                appointmentRepository.existsByDoctorIdAndAppointmentTimeAndStatusIn(
-                doctorId,
-                requestDTO.getAppointmentTime(),
-        List.of(AppointmentStatus.CONFIRMED,AppointmentStatus.PENDING)
-                );
+            if(Boolean.FALSE.equals(isLocked)){
+                throw new RuntimeException("Slot is being booked by another user, please try again");
+            }
+            try {
+                // 🔥 2. Fetch Slot
+                DoctorSlot doctorSlot =  doctorSlotRepository.findById(requestDTO.getSlot())
+                        .orElseThrow(() -> new RuntimeException("Slot not found"));
 
-        // --> request to entity
-        Appointment appointment = appointmentMapper.UserToEntity(requestDTO);
+                // 🔥 3. Double check (IMPORTANT 💀)
+                if(doctorSlot.isBooked()){
+                    throw new RuntimeException("Slot already Booked");
+                }
+                // 🔥 4. Fetch Patient
+                Patient patient = patientRepository.findById(requestDTO.getPatientId())
+                        .orElseThrow(() -> new RuntimeException("Patient Not Found at this id"));
 
-        if(appointment.getId() != null) throw new IllegalAccessException("Appointment should not have ID");
-        appointment.setDoctor(doctor);
-        appointment.setPatient(patient);
-        appointment.setStatus(AppointmentStatus.PENDING); //Enum
+                // --> request to entity
+                Appointment appointment = appointmentMapper.UserToEntity(requestDTO);
+                appointment.setSlot(doctorSlot);
+                appointment.setDoctor(doctorSlot.getDoctor());
+                appointment.setPatient(patient);
+                appointment.setReason(requestDTO.getAppointmentReason());
+//                appointment.setAppointmentTime(LocalDateTime.of(doctorSlot.getDate(),doctorSlot.getStartTime()));
+                appointment.setStatus(AppointmentStatus.CONFIRMED); //Enum
 
-        // --> ifDoctorIsBusy
-        if(isDoctorIsBusy){
-            appointment.setStatus(AppointmentStatus.PENDING);
-        } else {
-            appointment.setStatus(AppointmentStatus.CONFIRMED);
-        }
-        // For BioDirectional
-        patient.getAppointments().add(appointment);
-        Appointment saved = appointmentRepository.save(appointment);
-        return appointmentMapper.EntityToDTO(saved);
+                // 🔥 6. Mark slot booked
+                doctorSlot.setBooked(true);
+                doctorSlotRepository.save(doctorSlot);
+
+                // For BioDirectional
+                patient.getAppointments().add(appointment);
+                // 🔥 7. Save
+                Appointment saved = appointmentRepository.save(appointment);
+                return appointmentMapper.EntityToDTO(saved);
+
 
 
 //        // Email ka Logic
@@ -149,6 +168,11 @@ public class AppointmentService {
 //            );
 //        }
 //        return appointmentMapper.EntityToDTO(saved);
+            }
+            finally {
+                //Lock reliase
+                redisTemplate.delete(lockKey);
+            }
     }
 
     // --> CancelAppointment

@@ -40,9 +40,9 @@ public interface PatientMapper {
 
     Patient userToEntity(PatientPostRequestDTO patientPostRequestDTO);
 
-    // DTO To PatientEntity
-    AllPatientDTO DTOToPatientEntity(Patient patient);
     // PatientEntity to DTO
-    Patient PatientEntityToDTO(AllPatientDTO allPatientDTO);
+    AllPatientDTO EntitytoDTO(Patient patient);
+    // DTO To PatientEntity
+    Patient DTOtoEntity(AllPatientDTO allPatientDTO);
 
 }

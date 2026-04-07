@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +31,9 @@ public class Patients {
 
 
     @GetMapping("/getPatients")
-    public ResponseEntity<PageResponseDTO<AllPatientDTO>> getAllPatient(Pageable pageable){
+    public ResponseEntity<PageResponseDTO<AllPatientDTO>> getAllPatient(@RequestParam (defaultValue = "0") int page ,
+                                                                        @RequestParam(defaultValue = "10") int size){
+        Pageable pageable = PageRequest.of(page,size);
         return ResponseEntity.ok((PageResponseDTO<AllPatientDTO>) patientService.getAllPatient(pageable));
     }
 

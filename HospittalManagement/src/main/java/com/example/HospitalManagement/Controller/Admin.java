@@ -5,6 +5,7 @@ import com.example.HospitalManagement.Entity.DTO.DoctorsDTO.DoctorPOSTResponseDT
 import com.example.HospitalManagement.Service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/A1/Admin/")
 public class Admin {
 
@@ -23,6 +25,7 @@ public class Admin {
     // --> PostAPI's
     @PostMapping("/DoctorOnBoarding")
     public ResponseEntity<DoctorPOSTResponseDTO> CreateNewDoctor( @RequestBody DoctorPOSTRequestDTO doctorPOSTRequestDTO){
+        log.info("DoctorOnBoarding Request Received from : {}", doctorPOSTRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(doctorService.onBoardDooctor(doctorPOSTRequestDTO));
     }
 }

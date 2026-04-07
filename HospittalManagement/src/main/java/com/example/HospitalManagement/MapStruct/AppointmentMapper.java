@@ -14,6 +14,7 @@ public interface AppointmentMapper {
     // 1--> User RequestDTO to Entity(Database) ( postMapping )
     @Mapping(source = "appointmentTime",target = "appointmentTime")
     @Mapping(source = "appointmentReason",target = "reason")
+    @Mapping(target = "slot",ignore = true)
     @Mapping(target = "id",ignore = true)
     Appointment UserToEntity(CreateAppointmentRequestDTO dto);
 
@@ -21,6 +22,7 @@ public interface AppointmentMapper {
     @Mapping(source = "id",target = "appointmentId")
     @Mapping(source = "appointmentTime",target = "appointmentTime")
     @Mapping(source = "reason",target = "reason")
+    @Mapping(source = "slot.id",target = "slot")
     @Mapping(source = "patient.name",target = "patientName")
     @Mapping(source = "doctor.name",target = "doctorName")
     @Mapping(source = "status", target = "appointmentStatus")

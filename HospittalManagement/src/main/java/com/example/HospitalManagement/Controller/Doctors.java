@@ -9,6 +9,7 @@ import com.example.HospitalManagement.Service.AppointmentService;
 import com.example.HospitalManagement.Service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/v4/doctors")
 public class Doctors {
 
@@ -34,7 +36,7 @@ public class Doctors {
             @PathVariable Integer id,
             @RequestParam (defaultValue = "0")int page,
             @RequestParam (defaultValue = "2")int size){
-
+        log.info("Fetch Doctor By Id Request Received from : {}", id);
         Pageable pageable = PageRequest.of(page,size);
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ResponseEntity.ok(doctorService.getDoctorsById(user.getId(), pageable));
@@ -44,6 +46,7 @@ public class Doctors {
     @GetMapping("/Doctors")
     public ResponseEntity<Page<DoctorResponseDTOView>> getAllDoctors(@RequestParam (defaultValue = "0") int page,
                                                                      @RequestParam(defaultValue = "5") int size){
+        log.info("Fetch Doctor's Request Received from : {}", page);
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(doctorService.getAllDoctors(pageable));
     }

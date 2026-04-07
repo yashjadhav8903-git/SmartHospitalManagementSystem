@@ -33,7 +33,8 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status;
 
-    
+    @ManyToOne
+    private DoctorSlot slot;
     //--> Owning Side
     @ManyToOne
     @JoinColumn(nullable = false)  //Patient is Required

@@ -7,6 +7,7 @@ import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.CreateAppointme
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.CreateAppointmentResponseDTO;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
+import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.Projection.ForAppointmens.AppointmentProjection;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-03-22T14:32:09+0530",
+    date = "2026-04-07T20:34:18+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Microsoft)"
 )
 @Component
@@ -46,6 +47,7 @@ public class AppointmentMapperImpl implements AppointmentMapper {
         createAppointmentResponseDTO.setAppointmentId( appointment.getId() );
         createAppointmentResponseDTO.setAppointmentTime( appointment.getAppointmentTime() );
         createAppointmentResponseDTO.setReason( appointment.getReason() );
+        createAppointmentResponseDTO.setSlot( appointmentSlotId( appointment ) );
         createAppointmentResponseDTO.setPatientName( appointmentPatientName( appointment ) );
         createAppointmentResponseDTO.setDoctorName( appointmentDoctorName( appointment ) );
         createAppointmentResponseDTO.setAppointmentStatus( appointment.getStatus() );
@@ -122,6 +124,21 @@ public class AppointmentMapperImpl implements AppointmentMapper {
         cancelAppointmentResponseDTO.setCancelReason( appointment.getReason() );
 
         return cancelAppointmentResponseDTO;
+    }
+
+    private Integer appointmentSlotId(Appointment appointment) {
+        if ( appointment == null ) {
+            return null;
+        }
+        DoctorSlot slot = appointment.getSlot();
+        if ( slot == null ) {
+            return null;
+        }
+        Integer id = slot.getId();
+        if ( id == null ) {
+            return null;
+        }
+        return id;
     }
 
     private String appointmentPatientName(Appointment appointment) {
