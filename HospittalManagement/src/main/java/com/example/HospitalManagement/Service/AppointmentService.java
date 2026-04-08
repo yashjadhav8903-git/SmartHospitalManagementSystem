@@ -20,6 +20,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -28,6 +30,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +48,7 @@ public class AppointmentService {
     private final ModelMapper modelMapper;
     private final AppointmentMapper appointmentMapper;
     private final RedisTemplate redisTemplate;
+    private final RedissonClient redissonClient;
 //    private final NormalEmailService normalEmailService;
 
 
@@ -103,76 +107,98 @@ public class AppointmentService {
     @PreAuthorize("hasAuthority('Appointment:Write')")  //--> Ye hi hota hai Ownership Based Access Control
     public CreateAppointmentResponseDTO  CreateNewAppointments(CreateAppointmentRequestDTO requestDTO, Integer doctorId, Integer patientId) throws IllegalAccessException, MessagingException {
 
-        Integer slotId = requestDTO.getSlot();
+            Integer slotId = requestDTO.getSlot();
             String lockKey = "lock:key:" + slotId;
 
-        // 🔥 1. Try to acquire lock (5 sec expiry)
-            Boolean isLocked = redisTemplate.opsForValue()
-                    .setIfAbsent(lockKey,"locked",5, TimeUnit.SECONDS);
+            // Normal Redis lock
+//            // 🔥 1. Try to acquire lock (5 sec expiry)
+//            Boolean isLocked = redisTemplate.opsForValue()
+//                    .setIfAbsent(lockKey,"locked",5, TimeUnit.SECONDS);
+//
+//            if(Boolean.FALSE.equals(isLocked)){
+//                throw new RuntimeException("Slot is being booked by another user, please try again");
+//            }
 
-            if(Boolean.FALSE.equals(isLocked)){
-                throw new RuntimeException("Slot is being booked by another user, please try again");
-            }
+
+            // Redisson lock
+            RLock lock = redissonClient.getLock(lockKey);
+
             try {
-                // 🔥 2. Fetch Slot
-                DoctorSlot doctorSlot =  doctorSlotRepository.findById(requestDTO.getSlot())
-                        .orElseThrow(() -> new RuntimeException("Slot not found"));
+                    // ager lock kisi or ke paas hai toh 10 second ke liye wait kro Nahi toh 5 second baat Auto relase hoga
+                    boolean isLocked = lock.tryLock(10,5,TimeUnit.SECONDS);
 
-                // 🔥 3. Double check (IMPORTANT 💀)
-                if(doctorSlot.isBooked()){
-                    throw new RuntimeException("Slot already Booked");
-                }
-                // 🔥 4. Fetch Patient
-                Patient patient = patientRepository.findById(requestDTO.getPatientId())
-                        .orElseThrow(() -> new RuntimeException("Patient Not Found at this id"));
+                    // Agar 10 sec wait karne ke baad bhi lock nahi mila
+                    if(!isLocked){
+                        throw new RuntimeException("Slot is being booked by another user, please try again");
+                    }
+                    // 🔥 2. Fetch Slot
+                    DoctorSlot doctorSlot =  doctorSlotRepository.findById(requestDTO.getSlot())
+                            .orElseThrow(() -> new RuntimeException("Slot not found"));
 
-                // --> request to entity
-                Appointment appointment = appointmentMapper.UserToEntity(requestDTO);
-                appointment.setSlot(doctorSlot);
-                appointment.setDoctor(doctorSlot.getDoctor());
-                appointment.setPatient(patient);
-                appointment.setReason(requestDTO.getAppointmentReason());
-//                appointment.setAppointmentTime(LocalDateTime.of(doctorSlot.getDate(),doctorSlot.getStartTime()));
-                appointment.setStatus(AppointmentStatus.CONFIRMED); //Enum
+                    // 🔥 3. Double check (IMPORTANT 💀)
+                    if(doctorSlot.isBooked()){
+                        throw new RuntimeException("Appointment already Booked");
+                    }
+                    // 🔥 4. Fetch Patient
+                    Patient patient = patientRepository.findById(requestDTO.getPatientId())
+                            .orElseThrow(() -> new RuntimeException("Patient Not Found at this id"));
 
-                // 🔥 6. Mark slot booked
-                doctorSlot.setBooked(true);
-                doctorSlotRepository.save(doctorSlot);
+                    // --> request to entity
+                    Appointment appointment = appointmentMapper.UserToEntity(requestDTO);
+                    appointment.setSlot(doctorSlot);
+                    appointment.setDoctor(doctorSlot.getDoctor());
+                    appointment.setPatient(patient);
+                    appointment.setReason(requestDTO.getAppointmentReason());
+    //                appointment.setAppointmentTime(LocalDateTime.of(doctorSlot.getDate(),doctorSlot.getStartTime()));
+                    appointment.setStatus(AppointmentStatus.CONFIRMED); //Enum
 
-                // For BioDirectional
-                patient.getAppointments().add(appointment);
-                // 🔥 7. Save
-                Appointment saved = appointmentRepository.save(appointment);
-                return appointmentMapper.EntityToDTO(saved);
+                    // 🔥 6. Mark slot booked
+                    doctorSlot.setBooked(true);
+                    doctorSlotRepository.save(doctorSlot);
 
-
-
-//        // Email ka Logic
-//        if(saved.getStatus() == AppointmentStatus.CONFIRMED){
-//            System.out.println("Status is CONFIRMED, sending email...");
-//            normalEmailService.SendConfirmedEmail(
-//                    patient.getEmail(),   // 1. Email
-//                    patient.getName(),    // 2. Patient ka naam
-//                    doctor.getName(),     // 3. Doctor ka naam
-//                    saved.getId(),        // 4 .ID
-//                    saved.getAppointmentTime().toString(), // 5. Time
-//                    saved.getReason()     // 6. Bimari/Reason
-//            );
-//        } else if(saved.getStatus() == AppointmentStatus.PENDING) {
-//            System.out.println("Status is PENDING, sending email...");
-//            normalEmailService.SendPendingEmail(
-//                    patient.getEmail(),
-//                    patient.getName(),
-//                    saved.getId(),
-//                    saved.getReason()
-//            );
-//        }
-//        return appointmentMapper.EntityToDTO(saved);
-            }
-            finally {
+                    // For BioDirectional
+                    patient.getAppointments().add(appointment);
+                    // 🔥 7. Save
+                    Appointment saved = appointmentRepository.save(appointment);  // New Entry
+                    return appointmentMapper.EntityToDTO(saved);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Booking process interrupted!");
+            } finally {
                 //Lock reliase
-                redisTemplate.delete(lockKey);
+                //redisTemplate.delete(lockKey);
+                if(lock.isHeldByCurrentThread()){
+                    lock.unlock();
+                }
             }
+
+
+    //        // Email ka Logic
+    //        if(saved.getStatus() == AppointmentStatus.CONFIRMED){
+    //            System.out.println("Status is CONFIRMED, sending email...");
+    //            normalEmailService.SendConfirmedEmail(
+    //                    patient.getEmail(),   // 1. Email
+    //                    patient.getName(),    // 2. Patient ka naam
+    //                    doctor.getName(),     // 3. Doctor ka naam
+    //                    saved.getId(),        // 4 .ID
+    //                    saved.getAppointmentTime().toString(), // 5. Time
+    //                    saved.getReason()     // 6. Bimari/Reason
+    //            );
+    //        } else if(saved.getStatus() == AppointmentStatus.PENDING) {
+    //            System.out.println("Status is PENDING, sending email...");
+    //            normalEmailService.SendPendingEmail(
+    //                    patient.getEmail(),
+    //                    patient.getName(),
+    //                    saved.getId(),
+    //                    saved.getReason()
+    //            );
+    //        }
+    //        return appointmentMapper.EntityToDTO(saved);
+//            }
+//            finally {
+//                //Lock reliase
+//                redisTemplate.delete(lockKey);
+//            }
     }
 
     // --> CancelAppointment
@@ -189,13 +215,35 @@ public class AppointmentService {
             System.out.println("you can't Cancel Other Appointment");
         }
 
+        if (appointment.getSlot().getDate().isBefore(LocalDate.now())) {
+            throw new RuntimeException("Cannot cancel past appointment");
+        }
+
         // Already cancel Check
         if(appointment.getStatus() == AppointmentStatus.CANCELLED){
-            System.out.println("Appointment Already Cancelled");
+            throw new RuntimeException("Appointment Already Cancelled");
         }
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointment.setReason(cancelDTO.getCancelReason());
-        return appointmentMapper.EntityToResponse(appointment);
+
+        Integer slotId = appointment.getSlot().getId();
+        String lockKey = "lock:key:" + slotId;
+
+        // 🔥 1. Try to acquire lock (5 sec expiry)
+        Boolean isLocked = redisTemplate.opsForValue()
+                .setIfAbsent(lockKey,"locked",5, TimeUnit.SECONDS);
+
+        if(Boolean.FALSE.equals(isLocked)){
+            throw new RuntimeException("try again");
+        }
+        try {
+            DoctorSlot slot = appointment.getSlot();
+            slot.setBooked(false); // lock release
+            appointment.setStatus(AppointmentStatus.CANCELLED);
+            appointment.setReason(cancelDTO.getCancelReason());
+            return appointmentMapper.EntityToResponse(appointment);
+        }
+        finally {
+            redisTemplate.delete(lockKey);
+        }
     }
 
 

@@ -21,6 +21,7 @@ public class Appointments {
 
     private final AppointmentService appointmentService;
 
+
     // 1 --> getAppointmentWithProjection
     @GetMapping("getAppointments/{doctorId}")
     public ResponseEntity<Page<AppointmentResponseDTO>> getAppointment(@RequestParam (defaultValue = "0") int page ,
@@ -38,10 +39,9 @@ public class Appointments {
                                                                                 createAppointmentRequestDTO,
                                                                           @PathVariable Integer doctorId,
                                                                           @PathVariable Integer patientId) throws IllegalAccessException, MessagingException {
-        log.info("Book-Appointment Request Received from Patient-Id : {}", patientId);
+        log.info("Book-Appointment Request Received from Patient-Id & Doctor-Id : {}", patientId);
         CreateAppointmentResponseDTO appointment = appointmentService.
                 CreateNewAppointments(createAppointmentRequestDTO,doctorId,patientId);
-
         return ResponseEntity.status(HttpStatus.CREATED).
                 body(appointment);
     }
