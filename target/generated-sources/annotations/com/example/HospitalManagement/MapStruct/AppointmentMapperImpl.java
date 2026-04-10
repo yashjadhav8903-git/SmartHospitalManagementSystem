@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-04-08T23:17:00+0530",
+    date = "2026-04-10T17:37:00+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Microsoft)"
 )
 @Component
@@ -53,6 +53,24 @@ public class AppointmentMapperImpl implements AppointmentMapper {
         createAppointmentResponseDTO.setAppointmentStatus( appointment.getStatus() );
 
         return createAppointmentResponseDTO;
+    }
+
+    @Override
+    public AppointmentResponseDTO EntityPagetoDTO(Appointment appointment) {
+        if ( appointment == null ) {
+            return null;
+        }
+
+        AppointmentResponseDTO appointmentResponseDTO = new AppointmentResponseDTO();
+
+        appointmentResponseDTO.setAppointmentId( appointment.getId() );
+        appointmentResponseDTO.setAppointmentTime( appointment.getAppointmentTime() );
+        appointmentResponseDTO.setReason( appointment.getReason() );
+        appointmentResponseDTO.setSlot( appointmentSlotId( appointment ) );
+        appointmentResponseDTO.setPatientName( appointmentPatientName( appointment ) );
+        appointmentResponseDTO.setDoctorName( appointmentDoctorName( appointment ) );
+
+        return appointmentResponseDTO;
     }
 
     @Override
@@ -122,6 +140,7 @@ public class AppointmentMapperImpl implements AppointmentMapper {
         cancelAppointmentResponseDTO.setPatientName( appointmentPatientName( appointment ) );
         cancelAppointmentResponseDTO.setDoctorName( appointmentDoctorName( appointment ) );
         cancelAppointmentResponseDTO.setCancelReason( appointment.getReason() );
+        cancelAppointmentResponseDTO.setAppointmentStatus( appointment.getStatus() );
 
         return cancelAppointmentResponseDTO;
     }

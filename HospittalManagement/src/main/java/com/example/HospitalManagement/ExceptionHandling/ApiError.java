@@ -1,4 +1,4 @@
-package com.example.HospitalManagement.ExceptionHanding;
+package com.example.HospitalManagement.ExceptionHandling;
 
 import lombok.Data;
 import org.springframework.http.HttpStatus;

@@ -29,6 +29,15 @@ public interface AppointmentMapper {
     CreateAppointmentResponseDTO EntityToDTO(Appointment appointment);
 
 
+    @Mapping(source = "id",target = "appointmentId")
+    @Mapping(source = "appointmentTime",target = "appointmentTime")
+    @Mapping(source = "reason",target = "reason")
+    @Mapping(source = "slot.id",target = "slot")
+    @Mapping(source = "patient.name",target = "patientName")
+    @Mapping(source = "doctor.name",target = "doctorName")
+    AppointmentResponseDTO EntityPagetoDTO(Appointment appointment);
+
+
 
     // --> Projection to DTO(iska koi bhi role nahi hai. kyuki data post kr rahe hai naki get)
     @Mapping(source = "appointmentId",target = "appointmentId")
@@ -60,6 +69,7 @@ public interface AppointmentMapper {
     @Mapping(source = "patient.name",target = "patientName")
     @Mapping(source = "doctor.name",target = "doctorName")
     @Mapping(source = "reason",target = "cancelReason")
+    @Mapping(source = "status", target = "appointmentStatus")
     CancelAppointmentResponseDTO EntityToResponse(Appointment appointment);
 
 }

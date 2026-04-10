@@ -1,6 +1,7 @@
 package com.example.HospitalManagement.Controller;
 
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
+import com.example.HospitalManagement.Redis.AppointmentPageResponseDTO;
 import com.example.HospitalManagement.Service.AppointmentService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -24,26 +25,23 @@ public class Appointments {
 
     // 1 --> getAppointmentWithProjection
     @GetMapping("getAppointments/{doctorId}")
-    public ResponseEntity<Page<AppointmentResponseDTO>> getAppointment(@RequestParam (defaultValue = "0") int page ,
-                                                                       @RequestParam(defaultValue = "5") int size,
-                                                                       @PathVariable Integer doctorId){
-        log.info("getAppointments Request Received from : {}", doctorId);
+    public ResponseEntity<AppointmentPageResponseDTO<AppointmentResponseDTO>> getAppointment(@RequestParam (defaultValue = "0") int page ,
+                                                                                             @RequestParam(defaultValue = "5") int size,
+                                                                                             @PathVariable Integer doctorId){
+        log.info("getAppointments Request Received from Doctor-Id : {}", doctorId);
         Pageable pageable = PageRequest.of(page,size,Sort.by(Sort.Direction.ASC,"appointmentTime"));
-        return ResponseEntity.ok(appointmentService.getAppointments(pageable,doctorId));
+        return ResponseEntity.ok(appointmentService.getAppointments(pageable, doctorId));
     }
 
 
     //2 ---> CreateNewAppointment API's with MapStruct
-    @PostMapping("/Book-Appointment/{doctorId}/{patientId}")
+    @PostMapping("/Book-Appointment")
     public ResponseEntity<CreateAppointmentResponseDTO> CreateAppointment(@RequestBody CreateAppointmentRequestDTO
-                                                                                createAppointmentRequestDTO,
-                                                                          @PathVariable Integer doctorId,
-                                                                          @PathVariable Integer patientId) throws IllegalAccessException, MessagingException {
-        log.info("Book-Appointment Request Received from Patient-Id & Doctor-Id : {}", patientId);
+                                                                                requestDTO) throws IllegalAccessException, MessagingException {
+        log.info("Book-Appointment Request Received from Patient-Id & Doctor-Id : {}",requestDTO);
         CreateAppointmentResponseDTO appointment = appointmentService.
-                CreateNewAppointments(createAppointmentRequestDTO,doctorId,patientId);
-        return ResponseEntity.status(HttpStatus.CREATED).
-                body(appointment);
+                    CreateNewAppointments(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(appointment);
     }
 
 
@@ -59,7 +57,7 @@ public class Appointments {
     //4 ---> Cancel Appointment
     @PostMapping("/cancel")
     public CancelAppointmentResponseDTO CancelAppointment(@RequestBody CancelAppointmentRequestDTO cancelAppointmentRequestDTO){
-        log.info("Cancel-Appointment Request Received from : {}", cancelAppointmentRequestDTO);
+        log.info("Cancel-Appointment Request Received from Appointment-Id : {}", cancelAppointmentRequestDTO.getAppointmentId());
         return appointmentService.cancelAppointment(cancelAppointmentRequestDTO);
     }
 }

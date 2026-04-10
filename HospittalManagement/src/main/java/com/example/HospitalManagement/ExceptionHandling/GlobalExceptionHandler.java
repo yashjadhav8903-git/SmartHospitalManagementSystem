@@ -1,4 +1,5 @@
-package com.example.HospitalManagement.ExceptionHanding;
+package com.example.HospitalManagement.ExceptionHandling;
+import com.example.HospitalManagement.ExceptionHandling.ApiError;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -18,14 +19,11 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.ClientAuthorizationRequiredException;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.security.SignatureException;
 import java.util.NoSuchElementException;
 
@@ -167,7 +165,6 @@ public class GlobalExceptionHandler {
     // 5 . Omniversal Exception ( GOAT of all Exceptions ) 🤣
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception exception){
-        log.error("Fetching Data from Redis for Patient Page: {}", exception);
         ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR,"An unexpected error occcured : " + exception.getMessage());
         return new ResponseEntity<>(apiError,HttpStatus.INTERNAL_SERVER_ERROR);
     }

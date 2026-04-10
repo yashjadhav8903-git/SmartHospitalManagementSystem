@@ -9,11 +9,12 @@ import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.MapStruct.AppointmentMapper;
-import com.example.HospitalManagement.Projection.ForAppointmens.AppointmentProjection;
+import com.example.HospitalManagement.Redis.AppointmentPageResponseDTO;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
 import com.example.HospitalManagement.Repository.DoctorRepository;
 import com.example.HospitalManagement.Repository.DoctorSlotRepository;
 import com.example.HospitalManagement.Repository.PatientRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -23,15 +24,14 @@ import org.modelmapper.ModelMapper;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -49,6 +49,7 @@ public class AppointmentService {
     private final AppointmentMapper appointmentMapper;
     private final RedisTemplate redisTemplate;
     private final RedissonClient redissonClient;
+    private final ObjectMapper objectMapper;
 //    private final NormalEmailService normalEmailService;
 
 
@@ -102,10 +103,10 @@ public class AppointmentService {
 
 
     /// 1 ---> Create Appointment
-//    @Transactional
-    @CacheEvict(cacheNames = "appointments",allEntries = true)
+    @Transactional
+    @CacheEvict(value = "appointments", allEntries = true)
     @PreAuthorize("hasAuthority('Appointment:Write')")  //--> Ye hi hota hai Ownership Based Access Control
-    public CreateAppointmentResponseDTO  CreateNewAppointments(CreateAppointmentRequestDTO requestDTO, Integer doctorId, Integer patientId) throws IllegalAccessException, MessagingException {
+    public CreateAppointmentResponseDTO  CreateNewAppointments(CreateAppointmentRequestDTO requestDTO) throws IllegalAccessException, MessagingException {
 
             Integer slotId = requestDTO.getSlot();
             String lockKey = "lock:key:" + slotId;
@@ -203,6 +204,7 @@ public class AppointmentService {
 
     // --> CancelAppointment
     @Transactional
+    @CacheEvict(value = "appointments", allEntries = true)
     @PreAuthorize("hasAuthority('Appointment:Delete')")
     public CancelAppointmentResponseDTO cancelAppointment(CancelAppointmentRequestDTO cancelDTO){
 
@@ -214,7 +216,7 @@ public class AppointmentService {
         if(!appointment.getPatient().getId().equals(cancelDTO.getPatientId())){
             System.out.println("you can't Cancel Other Appointment");
         }
-
+        // past slot ko prevent ke liye
         if (appointment.getSlot().getDate().isBefore(LocalDate.now())) {
             throw new RuntimeException("Cannot cancel past appointment");
         }
@@ -260,11 +262,42 @@ public class AppointmentService {
 
     //---> getAppointmentWithProjection
     @Transactional
-    @Cacheable(cacheNames = "appointments" , key = "#'doctorId:' + #pageable.pageNumber + ':' + #pageable.pageSize ")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and #doctorId == authentication.principal.id)")  //---> Ye hi hota hai Ownership Based Access Control
-    public Page<AppointmentResponseDTO> getAppointments(Pageable pageable,Integer doctorId){
-        System.out.println("🔥 DATABASE HIT - Fetching from DB");
-        Page<AppointmentProjection> page = appointmentRepository.findAppointmentWithPage(doctorId, pageable);
-        return page.map(appointmentMapper::ProjectionToResSTO);
+    public AppointmentPageResponseDTO<AppointmentResponseDTO> getAppointments(Pageable pageable, Integer doctorId){
+        // get String key
+        String key = "appointments::" + doctorId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort().toString();
+        // check key and fetch data from redis
+
+        AppointmentPageResponseDTO <AppointmentResponseDTO> cached  =
+                (AppointmentPageResponseDTO<AppointmentResponseDTO>) redisTemplate.opsForValue().get(key);
+
+        if(cached != null){
+            log.info("Fetching Data from Redis for Patient Page: {}", doctorId);
+            return cached;
+        }
+
+        // ager nahi hai toh DB se lao
+        log.info("Redis Cache miss  --> DB Hit : {}", doctorId);
+        Page<Appointment> appointments = appointmentRepository.findAppointmentBydoctorId(doctorId, pageable);
+        // page convert to list
+        List<AppointmentResponseDTO> dtoList = appointments.getContent()
+                .stream().map(appointmentMapper::EntityPagetoDTO)
+                .toList();
+        // list mapping
+        AppointmentPageResponseDTO<AppointmentResponseDTO> responseDTO =
+                new AppointmentPageResponseDTO<>(
+                dtoList,
+                appointments.getNumber(),
+                appointments.getSize(),
+                appointments.getTotalElements(),
+                appointments.getTotalPages()
+                );
+        // save that list to redis
+        redisTemplate.opsForValue().set(
+                key,
+                responseDTO,
+                Duration.ofHours(2)
+        );
+        return responseDTO;
     }
 }

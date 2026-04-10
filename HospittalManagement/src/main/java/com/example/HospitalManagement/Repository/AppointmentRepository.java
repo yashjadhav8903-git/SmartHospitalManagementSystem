@@ -66,4 +66,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             where p.id = :patientId
            """)
     Page<AppointmentProjection> findAppointmentByPatientId(@Param("patientId") Integer patientId, Pageable pageable);
+
+    Page<Appointment> findAppointmentBydoctorId(Integer doctorId, Pageable pageable);
 }

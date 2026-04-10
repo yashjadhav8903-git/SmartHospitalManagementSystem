@@ -65,7 +65,7 @@ public class RedisConfig {
 
         // 9. setHashValueSerializer
         redisTemplate.setHashValueSerializer(serializer);
-
+        redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
@@ -73,11 +73,30 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager (RedisConnectionFactory redisConnectionFactory){
 
+        /// --> ObjectMapper Setup (For Java 8 Dates)
+        // 1. create a new ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        // 2. Java 8 Date/Time module register karo
+        objectMapper.registerModule(new JavaTimeModule());
+        // 3. Dates ko timestamps ki tarah likhna band karo (Readable banane ke liye)
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // 4. Typing enable karo (Isse LinkedHashMap wala error solve hoga)
+        // Ye JSON mein "@class" property add karega taki Redis ko pata chale ye RefreshToken hai
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(), //--> Yeh ek security guard ki tarah hai. Yeh check karta hai ki jo class hum JSON mein likh rahe hain, wo safe hai ya nahi. (Taki koi hacker galat class insert karke tumhara system crash na kar de).
+                ObjectMapper.DefaultTyping.NON_FINAL, //--> Yeh batata hai ki kaun-kaun si classes ki information JSON mein daalni hai. NON_FINAL ka matlab hai ki har wo class jo final nahi hai (jaise tumhari RefreshToken, User, Patient), unki details save karo.
+                JsonTypeInfo.As.PROPERTY //--> Yeh batata hai ki class ka naam JSON mein kaise dikhega. PROPERTY ka matlab hai ki JSON ke andar ek naya field ban jayega, jiska default naam hota hai @class.
+        );
+
+        // 5. Ye naya mapper GenericSerializer ko dedo (✅ Genericserializer ko batana padega ki ye wala objectMapper use kare)
+        GenericJackson2JsonRedisSerializer serializer =  new GenericJackson2JsonRedisSerializer(objectMapper);
+
         //Agar kisi cache ka special config nahi mila ( Ager maine jo Add kiye hai Appointment,patient,doctor ke alawa koi or redis me hoga toh )
         RedisCacheConfiguration defualtCache = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))   // --> Jo dusra Data 10 minute h rahega
                 .disableCachingNullValues()         // --> Ager DB se null data aa raha ho toh wo Redis Store nahi hoga.
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));  // java object -> JSON format me convert hoga , Redis me readable format me store hoga.
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));  // java object -> JSON format me convert hoga , Redis me readable format me store hoga.
 
         // Humne bs Key-Value store krni hai bs isliye Hashmap Eazy to use hai.
         Map<String, RedisCacheConfiguration> configMap = new HashMap<>();  //--> Har cache ke liye alag TTL define kar raha hai
@@ -90,9 +109,6 @@ public class RedisConfig {
         configMap.put("doctors",
                 defualtCache.entryTtl(Duration.ofHours(2)));     // 2 hours ke baad redis se data delete hoga
 
-        // 3 .Auto TTL patient
-//        configMap.put("patients",
-//                defualtCache.entryTtl(Duration.ofHours(3)));     // 3 hours ke baad redis se data delete hoga
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defualtCache)  // --> // Default config for others
