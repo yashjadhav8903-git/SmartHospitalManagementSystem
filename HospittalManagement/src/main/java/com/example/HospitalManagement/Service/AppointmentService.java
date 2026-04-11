@@ -2,6 +2,7 @@ package com.example.HospitalManagement.Service;
 
 //import com.example.HospitalManagement.EmailServices.NormalEmailService;
 
+import com.example.HospitalManagement.EmailServices.EmailEvent;
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
@@ -50,6 +51,7 @@ public class AppointmentService {
     private final RedisTemplate redisTemplate;
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
+    private final EmailEvent emailEvent;
 //    private final NormalEmailService normalEmailService;
 
 
@@ -161,6 +163,7 @@ public class AppointmentService {
                     patient.getAppointments().add(appointment);
                     // 🔥 7. Save
                     Appointment saved = appointmentRepository.save(appointment);  // New Entry
+                    emailEvent.sendAppointmentEmail(saved,patient,appointment.getDoctor());
                     return appointmentMapper.EntityToDTO(saved);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -241,6 +244,12 @@ public class AppointmentService {
             slot.setBooked(false); // lock release
             appointment.setStatus(AppointmentStatus.CANCELLED);
             appointment.setReason(cancelDTO.getCancelReason());
+
+            // DB mein update karo
+            appointmentRepository.save(appointment);
+            doctorSlotRepository.save(slot);
+            // cancel Email
+            emailEvent.SendCancelEmail(appointment,appointment.getPatient(),appointment.getDoctor());
             return appointmentMapper.EntityToResponse(appointment);
         }
         finally {
