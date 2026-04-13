@@ -35,7 +35,7 @@ public class Appointments {
 
 
     //2 ---> CreateNewAppointment API's with MapStruct
-    @PostMapping("/Book-Appointment")
+    @PostMapping("/book-Appointment")
     public ResponseEntity<CreateAppointmentResponseDTO> CreateAppointment(@RequestBody CreateAppointmentRequestDTO
                                                                                 requestDTO) throws IllegalAccessException, MessagingException {
         log.info("Book-Appointment Request Received from Patient-Id & Doctor-Id : {}",requestDTO);

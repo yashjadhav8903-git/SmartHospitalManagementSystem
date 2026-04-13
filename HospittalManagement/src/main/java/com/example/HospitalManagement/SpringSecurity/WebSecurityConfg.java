@@ -3,6 +3,8 @@ package com.example.HospitalManagement.SpringSecurity;
 import com.example.HospitalManagement.Enums.PermissionType;
 import com.example.HospitalManagement.Enums.RolesType;
 import com.example.HospitalManagement.OAuth2Google.OAuth2SuccessHandler;
+import com.example.HospitalManagement.RateLimiter.RateLimiterFilter;
+import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +35,10 @@ public class WebSecurityConfg {
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final RateLimiterFilter rateLimiterFilter;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+
         httpSecurity
                 .csrf(CsrfConfigurer -> CsrfConfigurer.disable())
                 .sessionManagement(sessionConfig ->
@@ -46,7 +50,9 @@ public class WebSecurityConfg {
                                 .requestMatchers("/secure").authenticated()
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimiterFilter,jwtAuthFilter.getClass())
                 .oauth2Login(oAuth2 -> oAuth2.
                         failureHandler((request, response, exception) -> {
                             log.error("OAuth2 Error Type: {}, Message: {}",

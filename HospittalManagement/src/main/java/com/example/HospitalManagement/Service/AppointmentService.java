@@ -2,7 +2,6 @@ package com.example.HospitalManagement.Service;
 
 //import com.example.HospitalManagement.EmailServices.NormalEmailService;
 
-import com.example.HospitalManagement.EmailServices.EmailEvent;
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
@@ -51,7 +50,7 @@ public class AppointmentService {
     private final RedisTemplate redisTemplate;
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
-    private final EmailEvent emailEvent;
+//    private final EmailEvent emailEvent;
 //    private final NormalEmailService normalEmailService;
 
 
@@ -163,7 +162,7 @@ public class AppointmentService {
                     patient.getAppointments().add(appointment);
                     // 🔥 7. Save
                     Appointment saved = appointmentRepository.save(appointment);  // New Entry
-                    emailEvent.sendAppointmentEmail(saved,patient,appointment.getDoctor());
+//                    emailEvent.sendAppointmentEmail(saved,patient,appointment.getDoctor());
                     return appointmentMapper.EntityToDTO(saved);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -175,34 +174,6 @@ public class AppointmentService {
                     lock.unlock();
                 }
             }
-
-
-    //        // Email ka Logic
-    //        if(saved.getStatus() == AppointmentStatus.CONFIRMED){
-    //            System.out.println("Status is CONFIRMED, sending email...");
-    //            normalEmailService.SendConfirmedEmail(
-    //                    patient.getEmail(),   // 1. Email
-    //                    patient.getName(),    // 2. Patient ka naam
-    //                    doctor.getName(),     // 3. Doctor ka naam
-    //                    saved.getId(),        // 4 .ID
-    //                    saved.getAppointmentTime().toString(), // 5. Time
-    //                    saved.getReason()     // 6. Bimari/Reason
-    //            );
-    //        } else if(saved.getStatus() == AppointmentStatus.PENDING) {
-    //            System.out.println("Status is PENDING, sending email...");
-    //            normalEmailService.SendPendingEmail(
-    //                    patient.getEmail(),
-    //                    patient.getName(),
-    //                    saved.getId(),
-    //                    saved.getReason()
-    //            );
-    //        }
-    //        return appointmentMapper.EntityToDTO(saved);
-//            }
-//            finally {
-//                //Lock reliase
-//                redisTemplate.delete(lockKey);
-//            }
     }
 
     // --> CancelAppointment
@@ -249,7 +220,7 @@ public class AppointmentService {
             appointmentRepository.save(appointment);
             doctorSlotRepository.save(slot);
             // cancel Email
-            emailEvent.SendCancelEmail(appointment,appointment.getPatient(),appointment.getDoctor());
+//            emailEvent.SendCancelEmail(appointment,appointment.getPatient(),appointment.getDoctor());
             return appointmentMapper.EntityToResponse(appointment);
         }
         finally {
