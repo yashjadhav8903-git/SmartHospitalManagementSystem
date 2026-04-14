@@ -276,7 +276,7 @@ public class AppointmentService {
         redisTemplate.opsForValue().set(
                 key,
                 responseDTO,
-                Duration.ofHours(2)
+                Duration.ofHours(1)
         );
         return responseDTO;
     }
