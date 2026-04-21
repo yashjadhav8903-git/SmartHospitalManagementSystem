@@ -11,6 +11,7 @@ import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.MapStruct.AppointmentMapper;
+import com.example.HospitalManagement.Rabbit_MQ.AppointmentBookEvent;
 import com.example.HospitalManagement.Rabbit_MQ.BookingEventDTO;
 import com.example.HospitalManagement.Redis.AppointmentPageResponseDTO;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
@@ -28,6 +29,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -58,6 +60,7 @@ public class AppointmentService {
     private final EmailEvent emailEvent;
     private final NormalEmailService normalEmailService;
     private final RabbitTemplate rabbitTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     /// 2 ---> ReAssign Appointment TO NewDoctor
@@ -173,13 +176,9 @@ public class AppointmentService {
                 eventDTO.setAppointmentTime(LocalDateTime.parse(saved.getAppointmentTime().toString()));
                 eventDTO.setReason(saved.getReason());
 
-                rabbitTemplate.convertAndSend(
-                        "booking_exchange",
-                        "booking.confirmed",
-                        eventDTO
-                );
+                // Event publish karo (Ye abhi RabbitMQ ko nahi bhej raha!)
+                applicationEventPublisher.publishEvent(new AppointmentBookEvent(this,eventDTO));
 
-//                    emailEvent.sendAppointmentEmail(saved,patient,appointment.getDoctor());
                     return appointmentMapper.EntityToDTO(saved);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
