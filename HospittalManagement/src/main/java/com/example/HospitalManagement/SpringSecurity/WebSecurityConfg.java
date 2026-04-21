@@ -52,7 +52,7 @@ public class WebSecurityConfg {
                 )
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimiterFilter,jwtAuthFilter.getClass())
+                .addFilterAfter(rateLimiterFilter,jwtAuthFilter.getClass())
                 .oauth2Login(oAuth2 -> oAuth2.
                         failureHandler((request, response, exception) -> {
                             log.error("OAuth2 Error Type: {}, Message: {}",

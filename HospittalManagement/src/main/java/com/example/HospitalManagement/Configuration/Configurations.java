@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.Configuration;
 
+import ch.qos.logback.classic.pattern.MessageConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -7,6 +8,7 @@ import org.modelmapper.ModelMapper;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -58,17 +60,9 @@ public class Configurations {
         return Redisson.create(config);
         }
 
-    // @Bean
-//    UserDetailsService userDetailsService(){
-//        UserDetails user1 = User.withUsername("admin")
-//                .password(passwordEncoder().encode("yash3035"))   // Password Encoder BCryptpassword
-//                .roles("ADMIN")
-//                .build();
-//
-//        UserDetails user2 = User.withUsername("doctor")
-//                .password(passwordEncoder().encode("yash3035"))    // Password Encoder BCryptpassword
-//                .roles("DOCTOR")
-//                .build();
-//        return new InMemoryUserDetailsManager(user1,user2);
-//    }
+
+    @Bean
+    public Jackson2JsonMessageConverter converter() {
+        return new Jackson2JsonMessageConverter();
+    }
 }

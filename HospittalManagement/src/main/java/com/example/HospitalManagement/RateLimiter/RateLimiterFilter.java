@@ -42,7 +42,7 @@ public class RateLimiterFilter extends OncePerRequestFilter {
             // 3 .Extract UserId from request
             String userId = request.getHeader("userId");
             // key must be userID , but same time ager UserId nahi hai toh key must be ip and uri
-            String key = (userId != null) ? userId : ip + ":" + uri;
+            String key = (userId != null) ? "USER:" + userId : "IP:" + ip ;
 
             // 4 .first time request Allowed
             boolean allowed = true;
@@ -52,7 +52,7 @@ public class RateLimiterFilter extends OncePerRequestFilter {
                 if (uri.contains("/login") || uri.contains("/signup")) {
                     // called rateLimiterService
                     allowed = rateLimiterService.isAllowed(
-                            key + ": auth", 5, 1, RateIntervalUnit.MINUTES
+                            key + ":AUTH", 5, 1, RateIntervalUnit.MINUTES
                     );
                 }
 
@@ -61,7 +61,7 @@ public class RateLimiterFilter extends OncePerRequestFilter {
                 else if (uri.contains("/book-Appointment")) {
                     // called rateLimiterService
                     allowed = rateLimiterService.isAllowed(
-                            key + ": booking", 10, 1, RateIntervalUnit.SECONDS
+                            key = ":BOOKING", 10, 1, RateIntervalUnit.SECONDS
                     );
                 }
                 ///---> if Redis crach or fallback rateLimiter not be shutDown
@@ -75,8 +75,8 @@ public class RateLimiterFilter extends OncePerRequestFilter {
             log.info("RateLimit | IP: {} | URI: {} | Allowed: {}", ip, uri, allowed);
 
             // 7 .ager request limit or duration ko exced kr rahi hai toh notAllowed
-            if(!allowed){
-                log.warn("🚨 Rate limit exceeded! IP: {} tried to access: {}", ip, uri);
+            if (!allowed) {
+                log.warn("❌ Rate limit HIT | IP: {} | URI: {}", ip, uri);
                 // response status code to fronted
                 response.setStatus(429);
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -88,6 +88,8 @@ public class RateLimiterFilter extends OncePerRequestFilter {
 
                 /// IMP *** --> or yehi sehi return krna hai naki request ko aage jane dena hai
                 return;
+            } else {
+                log.info("✅ Allowed | IP: {} | URI: {}", ip, uri);
             }
 
             // 8 .ager bas kuch control me hai toh aage bado --> go to next 👍 ( green flag )

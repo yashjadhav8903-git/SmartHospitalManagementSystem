@@ -2,6 +2,8 @@ package com.example.HospitalManagement.Service;
 
 //import com.example.HospitalManagement.EmailServices.NormalEmailService;
 
+import com.example.HospitalManagement.EmailServices.EmailEvent;
+import com.example.HospitalManagement.EmailServices.NormalEmailService;
 import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
 import com.example.HospitalManagement.Entity.EntityType.Appointment;
 import com.example.HospitalManagement.Entity.EntityType.Doctor;
@@ -9,6 +11,7 @@ import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.MapStruct.AppointmentMapper;
+import com.example.HospitalManagement.Rabbit_MQ.BookingEventDTO;
 import com.example.HospitalManagement.Redis.AppointmentPageResponseDTO;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
 import com.example.HospitalManagement.Repository.DoctorRepository;
@@ -23,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -50,8 +55,9 @@ public class AppointmentService {
     private final RedisTemplate redisTemplate;
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
-//    private final EmailEvent emailEvent;
-//    private final NormalEmailService normalEmailService;
+    private final EmailEvent emailEvent;
+    private final NormalEmailService normalEmailService;
+    private final RabbitTemplate rabbitTemplate;
 
 
     /// 2 ---> ReAssign Appointment TO NewDoctor
@@ -109,25 +115,19 @@ public class AppointmentService {
     @PreAuthorize("hasAuthority('Appointment:Write')")  //--> Ye hi hota hai Ownership Based Access Control
     public CreateAppointmentResponseDTO  CreateNewAppointments(CreateAppointmentRequestDTO requestDTO) throws IllegalAccessException, MessagingException {
 
+        System.out.println(
+                "Thread: " + Thread.currentThread() +
+                        " | isVirtual: " + Thread.currentThread().isVirtual()
+        );
+
             Integer slotId = requestDTO.getSlot();
             String lockKey = "lock:key:" + slotId;
-
-            // Normal Redis lock
-//            // 🔥 1. Try to acquire lock (5 sec expiry)
-//            Boolean isLocked = redisTemplate.opsForValue()
-//                    .setIfAbsent(lockKey,"locked",5, TimeUnit.SECONDS);
-//
-//            if(Boolean.FALSE.equals(isLocked)){
-//                throw new RuntimeException("Slot is being booked by another user, please try again");
-//            }
-
-
             // Redisson lock
             RLock lock = redissonClient.getLock(lockKey);
 
             try {
                     // ager lock kisi or ke paas hai toh 10 second ke liye wait kro Nahi toh 5 second baat Auto relase hoga
-                    boolean isLocked = lock.tryLock(10,5,TimeUnit.SECONDS);
+                    boolean isLocked = lock.tryLock(10,TimeUnit.SECONDS);
 
                     // Agar 10 sec wait karne ke baad bhi lock nahi mila
                     if(!isLocked){
@@ -161,7 +161,24 @@ public class AppointmentService {
                     // For BioDirectional
                     patient.getAppointments().add(appointment);
                     // 🔥 7. Save
-                    Appointment saved = appointmentRepository.save(appointment);  // New Entry
+                Appointment saved = appointmentRepository.save(appointment);  // New Entry
+                System.out.println("Appointment Successfully Book" + appointment);
+
+                BookingEventDTO eventDTO = new BookingEventDTO();
+                eventDTO.setId(saved.getId());
+                eventDTO.setEmail(patient.getEmail());
+                eventDTO.setUsername(patient.getName());
+                eventDTO.setSlot(Integer.valueOf(saved.getSlot().getId().toString()));
+                eventDTO.setDocterName(doctorSlot.getDoctor().getName());
+                eventDTO.setAppointmentTime(LocalDateTime.parse(saved.getAppointmentTime().toString()));
+                eventDTO.setReason(saved.getReason());
+
+                rabbitTemplate.convertAndSend(
+                        "booking_exchange",
+                        "booking.confirmed",
+                        eventDTO
+                );
+
 //                    emailEvent.sendAppointmentEmail(saved,patient,appointment.getDoctor());
                     return appointmentMapper.EntityToDTO(saved);
             } catch (InterruptedException e) {

@@ -38,6 +38,10 @@ public class Appointments {
     @PostMapping("/book-Appointment")
     public ResponseEntity<CreateAppointmentResponseDTO> CreateAppointment(@RequestBody CreateAppointmentRequestDTO
                                                                                 requestDTO) throws IllegalAccessException, MessagingException {
+        System.out.println(
+                "Thread: " + Thread.currentThread() +
+                        " | isVirtual: " + Thread.currentThread().isVirtual()
+        );
         log.info("Book-Appointment Request Received from Patient-Id & Doctor-Id : {}",requestDTO);
         CreateAppointmentResponseDTO appointment = appointmentService.
                     CreateNewAppointments(requestDTO);
