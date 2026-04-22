@@ -13,7 +13,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class AppointmentTransactionListener {
 
     private final RabbitTemplate rabbitTemplate;
+    private final RabbitMQConfig rabbitMQConfig;
 
+    // for confiremed
     // Phase: AFTER_COMMIT matlab DB mein data pakka save hone ke baad hi chalega
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAfterEvent(AppointmentBookEvent event){
@@ -24,4 +26,15 @@ public class AppointmentTransactionListener {
         );
     }
 
+
+    // for cancelled
+    // Phase: AFTER_COMMIT matlab DB mein data pakka save hone ke baad hi chalega
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleAftercancelEvent(BookingCancelEvent bookingCancelEvent){
+        rabbitTemplate.convertAndSend(
+                "booking_exchange",
+                RabbitMQConfig.ROUTING_KEY1,
+                bookingCancelEvent.getCancelEventDTO()
+        );
+    }
 }

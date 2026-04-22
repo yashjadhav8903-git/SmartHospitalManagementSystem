@@ -3,7 +3,6 @@ package com.example.HospitalManagement.EmailServices;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -18,8 +17,8 @@ public class NormalEmailService {
     private final JavaMailSender javaMailSender;
 
     // --> *** SendConfirmed Email ( if appointment is save than it Confirmed )
-    @Async
-    public void SendConfirmedEmail(String toEmail, String patientName, String doctorName, Integer slot,Integer AppointmentId, String time, String reason) throws MessagingException {
+
+    public void SendConfirmedEmail(String toEmail, String patientName, String doctorName, Integer slot, LocalDate date, Integer AppointmentId, String time, String reason) throws MessagingException {
 
         // Hospital Details (Ek jagah define kar do)
         final String hospitalName = "LifeCare Hospital";
@@ -62,6 +61,7 @@ public class NormalEmailService {
                     "    <div style='background: #f1f8e9; padding: 20px; border-left: 6px solid #2e7d32; border-radius: 4px; margin: 25px 0;'>" +
                     "      <p style='margin: 8px 0;'><strong>Appointment ID:</strong> #" + AppointmentId + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>BookedSlot:</strong> " + slot + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>AppointmentDate:</strong> " + date + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>CreatedAt:</strong> " + displayTime + "</p>" +
                     "      <p style='margin: 8px 0;'><strong>Doctor:</strong> " + doctorName + "</p>" +
                     "      <p style='margin: 8px 0;'><strong>Reason:</strong> " + reason + "</p>" +
@@ -122,7 +122,7 @@ public class NormalEmailService {
 
     // --> *** CancelEmail ( if appointment is Cancel )
     @Async
-    public void CancelledAppointment(String toEmail, String patientName, String doctorName, Integer slot, Integer AppointmentId, String time, String reason,Integer doctorId){
+    public void CancelledAppointment(String toEmail, String patientName, String doctorName, Integer slot,LocalDate date, Integer AppointmentId, String time, String reason,Integer doctorId){
 
         try{
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -150,7 +150,7 @@ public class NormalEmailService {
             }
 
             // Yahan apna current ngrok address dalo
-            String ngrokUrl = "https://science-shivering-quicken.ngrok-free.dev";
+            String ngrokUrl = "https://jump-hesitancy-reuse.ngrok-free.dev";
             // aaj ki date ke slot's
             LocalDate today = LocalDate.now();
             String rescheduleUrl = ngrokUrl + "/api/A2/schedule/Slot?docterId=" + doctorId + "&date=" + today;
@@ -166,6 +166,7 @@ public class NormalEmailService {
                             "    <div style='background: #f1f8e9; padding: 20px; border-left: 6px solid #d32f2f; border-radius: 4px; margin: 25px 0;'>" +
                             "      <p style='margin: 8px 0;'><strong>Appointment ID:</strong> #" + AppointmentId + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>CancelledSlot:</strong> " + slot + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>CancelledDate:</strong> " + date + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>IssueAt:</strong> " + displayTime + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>Doctor:</strong> " + doctorName + "</p>" +
                             "      <p style='margin: 8px 0;'><strong>CancelReason:</strong> " + reason + "</p>" +

@@ -7,11 +7,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-public class BookingEventDTO {
-
+public class CancelEventDTO {
     private Integer id;
     private String email;
-    private String username;
+    private String patientName;
     private Integer slot;
     private String docterName;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

@@ -12,7 +12,9 @@ import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.MapStruct.AppointmentMapper;
 import com.example.HospitalManagement.Rabbit_MQ.AppointmentBookEvent;
+import com.example.HospitalManagement.Rabbit_MQ.BookingCancelEvent;
 import com.example.HospitalManagement.Rabbit_MQ.BookingEventDTO;
+import com.example.HospitalManagement.Rabbit_MQ.CancelEventDTO;
 import com.example.HospitalManagement.Redis.AppointmentPageResponseDTO;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
 import com.example.HospitalManagement.Repository.DoctorRepository;
@@ -171,8 +173,9 @@ public class AppointmentService {
                 eventDTO.setId(saved.getId());
                 eventDTO.setEmail(patient.getEmail());
                 eventDTO.setUsername(patient.getName());
-                eventDTO.setSlot(Integer.valueOf(saved.getSlot().getId().toString()));
+                eventDTO.setSlot(saved.getSlot().getId());
                 eventDTO.setDocterName(doctorSlot.getDoctor().getName());
+                eventDTO.setDate(doctorSlot.getDate());
                 eventDTO.setAppointmentTime(LocalDateTime.parse(saved.getAppointmentTime().toString()));
                 eventDTO.setReason(saved.getReason());
 
@@ -236,7 +239,16 @@ public class AppointmentService {
             appointmentRepository.save(appointment);
             doctorSlotRepository.save(slot);
             // cancel Email
-//            emailEvent.SendCancelEmail(appointment,appointment.getPatient(),appointment.getDoctor());
+            CancelEventDTO eventDTO = new CancelEventDTO();
+            eventDTO.setId(appointment.getId());
+            eventDTO.setEmail(appointment.getPatient().getEmail());
+            eventDTO.setPatientName(appointment.getPatient().getName());
+            eventDTO.setSlot(appointment.getSlot().getId());
+            eventDTO.setDocterName(appointment.getDoctor().getName());
+            eventDTO.setDate(slot.getDate());
+            eventDTO.setAppointmentTime(LocalDateTime.parse(appointment.getAppointmentTime().toString()));
+            eventDTO.setReason(appointment.getReason());
+            applicationEventPublisher.publishEvent(new BookingCancelEvent(this,eventDTO));
             return appointmentMapper.EntityToResponse(appointment);
         }
         finally {
