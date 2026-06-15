@@ -1,0 +1,65 @@
+version: '3.8'
+
+
+services:
+  my-redis:
+    image: redis:latest
+    container_name: hospital-redis-container
+    ports:
+      - "6380:6379"  # <--- firstly "6379:6379" tha, ab bahar ka port 6380 kar diya
+
+  my-rabbitmq:
+    image: rabbitmq:3-management
+    container_name: hospital-rabbitmq-container
+    ports:
+      - "5673:5672"     # Bahar ka main port 5672 se badal kar 5673 kar diya
+      - "15673:15672"   # UI dashboard ka port 15672 se badal kar 15673 kar diya
+
+  app-instance1:
+    build: .
+    image: hospital-app-1:latest
+    container_name: hospital-app-1
+    environment:
+      - INSTANCE_NAME=hospital-app-1
+      - DOCKER_REDIS_HOST=my-redis
+      - DOCKER_REDIS_PORT=6379
+      - DOCKER_RABBIT_HOST=my-rabbitmq
+      - DOCKER_RABBIT_PORT=5672
+      - DB_HOST=host.docker.internal
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}          # <--- Docker ko Windows se key pass hogi
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}  # <--- Docker ko Windows se secret pass hoga
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
+    depends_on:
+      - my-redis
+      - my-rabbitmq
+
+  app-instance2:
+    build: .
+    image: hospital-app-2:latest
+    container_name: hospital-app-2
+    environment:
+      - INSTANCE_NAME=hospital-app-2
+      - DOCKER_REDIS_HOST=my-redis
+      - DOCKER_REDIS_PORT=6379
+      - DOCKER_RABBIT_HOST=my-rabbitmq
+      - DOCKER_RABBIT_PORT=5672
+      - DB_HOST=host.docker.internal
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}          # <--- Docker ko Windows se key pass hogi
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}  # <--- Docker ko Windows se secret pass hoga
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
+    depends_on:
+      - my-redis
+      - my-rabbitmq
+
+  nginx-lb:
+    image: nginx:latest
+    container_name: hospital-nginx-lb
+    ports:
+      - "80:80"       # Bahar ki duniya ke liye main port
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+        - app-instance1
+        - app-instance2

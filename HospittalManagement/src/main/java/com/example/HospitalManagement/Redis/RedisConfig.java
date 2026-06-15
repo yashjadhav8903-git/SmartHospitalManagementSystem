@@ -58,7 +58,7 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer()); //--> Redis me key Data Plan String me Store hota hai
 
         // 7. SetValueSerializer
-        redisTemplate.setValueSerializer(serializer);  //--> Redis ko nahi nahi pata "Java Object" toh Jackson library tumhare java object ko json  format me store krti hai.
+        redisTemplate.setValueSerializer(serializer);  //--> Redis ko nahi nahi pata "Java Object" toh Jackson library tumhare java object ko json format me store krti hai.
 
         // 8. setHashKeySerializer
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());

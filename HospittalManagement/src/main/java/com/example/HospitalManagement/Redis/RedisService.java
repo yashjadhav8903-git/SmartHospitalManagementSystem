@@ -54,6 +54,4 @@ public class RedisService {
         String Key = getKey(token);
         redisTemplate.delete(Key);
     }
-
-
 }

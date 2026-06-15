@@ -53,7 +53,21 @@ public class Configurations {
         @Bean
         public RedissonClient redissonClient(){
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://127.0.0.1:6379")
+
+        // 1. Pehle check karo ki kya system environment variable set hai (Docker ke liye)
+            String redisHost = System.getenv().getOrDefault("DOCKER_REDIS_HOST","127.0.0.1");
+            String redisUrl;
+//
+//            if(redisHost != null && !redisHost.isEmpty()){
+//                // Agar Docker ke andar chal raha hai (service name: my-redis, internal port: 6379)
+//                redisUrl = "redis://" + redisHost + ":6379";
+//            } else {
+//                // Agar local machine (IDE) se chala rahe ho
+//                redisUrl = "redis://127.0.0.1:6380";
+//            }
+        config.useSingleServer()
+                .setAddress("redis://" + redisHost + ":6379")
+//                .setAddress("redis://hospital-redis:6379")
                 .setConnectionMinimumIdleSize(5)
                 .setConnectionPoolSize(10);
 
