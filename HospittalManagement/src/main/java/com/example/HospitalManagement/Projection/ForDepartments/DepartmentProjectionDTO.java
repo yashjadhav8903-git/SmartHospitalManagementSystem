@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 public interface DepartmentProjectionDTO {
 
     Integer getId();
-    String getDepartmentNames();
+    String getName();
     String getHeadDoctorName();
 }

@@ -1,6 +1,6 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.SlotDTO.SlotResponseDTO;
+import com.example.HospitalManagement.DTO.SlotDTO.SlotResponseDTO;
 import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import org.mapstruct.Mapper;
 

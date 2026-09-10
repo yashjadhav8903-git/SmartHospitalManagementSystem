@@ -1,13 +1,10 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.DepartmentsDTO.DoctorResponseDeptDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AllPatientDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientInsuranceResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostResponseDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.AllPatientDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientInsuranceResponseDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostRequestDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostResponseDTO;
 import com.example.HospitalManagement.Entity.Patient;
-import com.example.HospitalManagement.Projection.ForDepartments.DoctorProjectionDTO;
-import com.example.HospitalManagement.Projection.ForPatients.GetAllPatientProjection;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -35,7 +32,6 @@ public interface PatientMapper {
     Patient userToEnity(PatientPostRequestDTO patientPostRequestDTO);
 
     //---> Entity to User
-    @Mapping(source = "bloodGroup",target = "bloodGroup")
     PatientPostResponseDTO EntityToUser(Patient patient);
 
     Patient userToEntity(PatientPostRequestDTO patientPostRequestDTO);

@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RRateLimiter;
+import org.jetbrains.annotations.NotNull;
 import org.redisson.api.RateIntervalUnit;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -23,8 +23,18 @@ public class RateLimiterFilter extends OncePerRequestFilter {
     private final RateLimiterService rateLimiterService;
     private final HandlerExceptionResolver handlerExceptionResolver;
 
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/doc");
+    }
+
+    @Override
+    protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
+                                    @NotNull FilterChain filterChain) throws ServletException, IOException {
 
         try{
 
@@ -32,20 +42,21 @@ public class RateLimiterFilter extends OncePerRequestFilter {
             String uri = request.getRequestURI();
             log.info("Incoming request: {}", request.getRequestURI());
 
-            // 2 .extract ip Address (ip = Internet Protocal)
-            String ip = request.getHeader("X-Forwarded-For");
-            // check ip
-            if(ip == null){
-                ip = request.getRemoteAddr(); // getremoteAddr -> user ka direct IP nikal leta hai.
-            }
+            // 2 .extract ip Address (ip = Internet Protocol)
+           String ip = extractClientIp(request);
 
             // 3 .Extract UserId from request
             String userId = request.getHeader("userId");
             // key must be userID , but same time ager UserId nahi hai toh key must be ip and uri
-            String key = (userId != null) ? "USER:" + userId : "IP:" + ip ;
+            String key = (userId != null && !userId.isBlank()) ? "USER:" + userId : "IP:" + ip ;
+            /**
+             *  we already have userId and Ip address so we identify or each User have there personal bucket.
+             *  100 patients agar 1 minute me aayenge toh system unhe block bilkul NAHI karega.
+             */
 
             // 4 .first time request Allowed
             boolean allowed = true;
+
             try {
                 // login / signUp
                 // 5 .If uri contain login and signup then allowed
@@ -61,15 +72,21 @@ public class RateLimiterFilter extends OncePerRequestFilter {
                 else if (uri.contains("/book-Appointment")) {
                     // called rateLimiterService
                     allowed = rateLimiterService.isAllowed(
-                            key = ":BOOKING", 10, 1, RateIntervalUnit.SECONDS
+                            key + ":BOOKING", 10, 1, RateIntervalUnit.SECONDS
+                    );
+                }
+                else {
+                    // 🛡 DEFAULT LIMIT: Baaki pure application ke har API endpoint ke liye
+                    allowed = rateLimiterService.isAllowed(
+                            key + ":GENERAL", 60, 1, RateIntervalUnit.MINUTES
                     );
                 }
                 ///---> if Redis crach or fallback rateLimiter not be shutDown
             } catch (Exception e){
-                // then allowed request to controller
+                // Redis is down or network timeout occurred
+                log.error("Redis RateLimiter error. Falling back to FAIL-OPEN: {}", e.getMessage());
+                // FAIL-OPEN: Set allowed to true so the app keeps working even if Redis is dead
                 allowed = true;
-                log.error("Something wrong between in Redis RateLimiter-Filter :{} ", request);
-                handlerExceptionResolver.resolveException(request,response,null,e);
             }
 
             log.info("RateLimit | IP: {} | URI: {} | Allowed: {}", ip, uri, allowed);
@@ -78,17 +95,17 @@ public class RateLimiterFilter extends OncePerRequestFilter {
             if (!allowed) {
                 log.warn("❌ Rate limit HIT | IP: {} | URI: {}", ip, uri);
                 // response status code to fronted
-                response.setStatus(429);
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType("application/json");
-                String message = String.format(
-                        "{\"error\": \"Too many requests\", \"message\": \"Please try again after %d seconds\"}"
-                );
-                response.getWriter().write(message);
+                response.setCharacterEncoding("UTF-8");
+
+                String jsonResponse = "{\"error\": \"Too Many Requests\", \"message\": \"Please try again later.\"}";
+                response.getWriter().write(jsonResponse);
 
                 /// IMP *** --> or yehi sehi return krna hai naki request ko aage jane dena hai
                 return;
             } else {
+
                 log.info("✅ Allowed | IP: {} | URI: {}", ip, uri);
             }
 
@@ -96,8 +113,18 @@ public class RateLimiterFilter extends OncePerRequestFilter {
            filterChain.doFilter(request,response);
 
         } catch (Exception e) {
-            log.error("Problem Come for RateLimiterFilter : {}" , request);
+            log.error("Unhandled Exception in RateLimiterFilter : {}" , request);
             handlerExceptionResolver.resolveException(request,response,null,e);
         }
+    }
+
+    private String extractClientIp (HttpServletRequest request){
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        return request.getRemoteAddr();
     }
 }

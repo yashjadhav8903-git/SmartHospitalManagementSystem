@@ -1,6 +1,6 @@
 package com.example.HospitalManagement.Projection.ForPatients;
 
-import com.example.HospitalManagement.Entity.EntityType.Blood_Group_type;
+import com.example.HospitalManagement.Enums.Blood_Group_type;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;

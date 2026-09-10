@@ -23,11 +23,11 @@ A backend-based Hospital Management System built using **Spring Boot**, focusing
 * **Language:** Java 17+
 * **Framework:** Spring Boot 3.x
 * **Security:** Spring Security, JWT, OAuth2
-* **Database:** MySQL
+* **Database:** PostgreSQL
 * **Caching:** Redis
 * **Build Tool:** Maven
 * **API Testing:** Postman
-* **Messaging:** Gmail SMTP
+* **Messaging:** Gmail
 
 ---
 

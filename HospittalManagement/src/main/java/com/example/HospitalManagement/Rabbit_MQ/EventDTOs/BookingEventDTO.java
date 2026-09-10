@@ -1,0 +1,21 @@
+package com.example.HospitalManagement.Rabbit_MQ.EventDTOs;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+public class BookingEventDTO {
+
+    private Integer id;
+    private String email;
+    private String username;
+    private Integer slot;
+    private String docterName;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime appointmentTime;
+    private LocalDate date;
+    private String reason;
+}

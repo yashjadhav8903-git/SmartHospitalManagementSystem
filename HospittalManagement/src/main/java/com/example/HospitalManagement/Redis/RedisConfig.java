@@ -89,7 +89,7 @@ public class RedisConfig {
                 JsonTypeInfo.As.PROPERTY //--> Yeh batata hai ki class ka naam JSON mein kaise dikhega. PROPERTY ka matlab hai ki JSON ke andar ek naya field ban jayega, jiska default naam hota hai @class.
         );
 
-        // 5. Ye naya mapper GenericSerializer ko dedo (✅ Genericserializer ko batana padega ki ye wala objectMapper use kare)
+        // 5. Ye naya mapper GenericSerializer ko dedo (✅ GenericSerializer ko batana padega ki ye wala objectMapper use kare)
         GenericJackson2JsonRedisSerializer serializer =  new GenericJackson2JsonRedisSerializer(objectMapper);
 
         //Agar kisi cache ka special config nahi mila ( Ager maine jo Add kiye hai Appointment,patient,doctor ke alawa koi or redis me hoga toh )
@@ -103,11 +103,11 @@ public class RedisConfig {
 
         // 1 .Auto TTL for Appointment
         configMap.put("appointments",
-                defualtCache.entryTtl(Duration.ofMinutes(15)));  // 15 minutes ke baad redis se data delete hoga
+                defualtCache.entryTtl(Duration.ofHours(1)));  // 15 minutes ke baad redis se data delete hoga
 
         // 2 .Auto TTL Doctor
         configMap.put("doctors",
-                defualtCache.entryTtl(Duration.ofHours(2)));     // 2 hours ke baad redis se data delete hoga
+                defualtCache.entryTtl(Duration.ofHours(1)));     // 2 hours ke baad redis se data delete hoga
 
 
         return RedisCacheManager.builder(redisConnectionFactory)

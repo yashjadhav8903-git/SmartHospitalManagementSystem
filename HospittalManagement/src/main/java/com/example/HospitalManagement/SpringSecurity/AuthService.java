@@ -1,28 +1,35 @@
 package com.example.HospitalManagement.SpringSecurity;
 
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.LoginRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.LoginResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.SignUpRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.SignUpResponseDTO;
+import com.example.HospitalManagement.AddressInfo.Address;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientSignUpRequestDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.SignUpRegisterResponseDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.LoginRequestDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.LoginResponseDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.SignUpRequestDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.SignUpResponseDTO;
 import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Entity.Patient;
+import com.example.HospitalManagement.Entity.RoleEntity;
 import com.example.HospitalManagement.Enums.RolesType;
+import com.example.HospitalManagement.ExceptionHandling.DuplicateEmailIdResourceException;
+import com.example.HospitalManagement.ExceptionHandling.PatientNotFoundException;
 import com.example.HospitalManagement.OAuth2Google.AuthProviderType;
-import com.example.HospitalManagement.Redis.RedisService;
 import com.example.HospitalManagement.RefreshTokenConfg.*;
+
 import com.example.HospitalManagement.Repository.PatientRepository;
-import jakarta.transaction.Transactional;
+import com.example.HospitalManagement.Repository.RoleRepository;
+import com.example.HospitalManagement.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetailsService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
@@ -30,79 +37,156 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private final PatientRepository patientRepository;
 
     private final PasswordEncoder passwordEncoder;
-    private final UserDetailsService userDetailsService;
     private final AuthJwtUtil authJwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PatientRepository patientRepository;
-    private final RedisService redisService;
+    private final RoleRepository  roleRepository;
+
+
+
 
     // 2. Login flow( match username and password )
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
 
+        String sanitizedUsername = loginRequestDTO.getUsername().toLowerCase().trim();
 
+        try {
 
             // AuthenticationManager --> calls → CustomUserService.loadUserByUsername()
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequestDTO.getUsername(), loginRequestDTO.getPassword())
+                    new UsernamePasswordAuthenticationToken(sanitizedUsername, loginRequestDTO.getPassword())
             );
             // get user in database
             UserEntity userEntity = (UserEntity) authentication.getPrincipal();
             // get token from AuthJwtUtil
-            String Token = authJwtUtil.generateAccessToken(userEntity);
-            // jwt token ke sath refreshtoken UUID me mile
+            String token = authJwtUtil.generateAccessToken(userEntity);
+            // jwt token ke sath refresh token UUID me mile
             RefreshTokenRedisDTO refreshToken = refreshTokenService.CreateRefreshToken(userEntity.getUsername());
 
-
+            log.info("User logged in successfully: {}", sanitizedUsername);
             // return jwtToken and userId
-                return new LoginResponseDTO(Token,
-                        refreshToken.getToken(),
-                        userEntity.getId());
+            return new LoginResponseDTO(token, refreshToken.getToken(),userEntity.getId());
+
+        } catch (BadCredentialsException e) {
+            log.warn("Invalid login attempt for user: {}", sanitizedUsername);
+            throw new BadCredentialsException("Invalid username or password");
+        }
+
+
     }
 
     // 2 . userSign flow
     @Transactional
     public UserEntity signupInternal(SignUpRequestDTO signupRequestDTO, AuthProviderType authProviderType, String providerId) {
+        String sanitizedUsername = signupRequestDTO.getUsername().toLowerCase().trim();
 
-        // 1. Check karo ki user pehle se DB mein hai ya nahi
-        UserEntity userEntity = userRepository.findByUsername(signupRequestDTO.getUsername()).orElse(null);
-
-        // 2. Agar user mil gaya, toh signup nahi ho sakta
-        if (userEntity != null) {
-            throw new IllegalArgumentException("User Already Exists");
+        // Check duplicate username
+        if (userRepository.existsByUsername(sanitizedUsername)) {
+            throw new DuplicateEmailIdResourceException("User with username " + sanitizedUsername + " already exists.");
         }
 
+        // Default PATIENT role directly fetch karo DB se
+        RoleEntity patientRole = roleRepository.findByRolesName(RolesType.PATIENT)
+                .orElseThrow(() -> new IllegalArgumentException("Default PATIENT role not found in DB"));
+
         // 3. Agar nahi mila, toh naya user banao
-        userEntity = UserEntity.builder()
-                .username(signupRequestDTO.getUsername())
+        UserEntity userEntity = UserEntity.builder()
+                .username(sanitizedUsername)
+                .name(signupRequestDTO.getName())
                 .providerType(authProviderType)
                 .providerId(providerId)
-                //.roles(Set.of(RolesType.PATIENT)  //--> this is correct
-                .roles(signupRequestDTO.getRoles())  // --> this for practice
+                .roles(Set.of(patientRole))  //--> this is correct
                 .build();
 
                 // Sirf tab password encode karo jab providerType Email ho
-                if(authProviderType == AuthProviderType.EMAIL){
-                    userEntity.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
-                }
+        if(authProviderType == AuthProviderType.EMAIL && signupRequestDTO.getPassword() != null){
+            userEntity.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
+        }
 
-        // --> user ko save kiya kyu ager user hoga tabhi toh patient banega na. he signup as user than i decide his roles like Patient,Doctor or Admin
+        // --> user ko save kiya kyu ager user hoga table toh patient banega na. he sign up as user than I decide his roles like Patient,Doctor or Admin
         userEntity = userRepository.save(userEntity);
 
         // return userEntity
         return userEntity;
     }
 
+
     // Controller method
     @Transactional
-    public SignUpResponseDTO signup(SignUpRequestDTO singupRequestDTO){
-        UserEntity userEntity = signupInternal(singupRequestDTO,AuthProviderType.EMAIL,null);
+    public SignUpResponseDTO signup(SignUpRequestDTO signupRequestDTO){
+        UserEntity userEntity = signupInternal(signupRequestDTO,AuthProviderType.EMAIL,null);
         return new SignUpResponseDTO(userEntity.getId(), userEntity.getUsername());
+    }
+
+    @Transactional
+    public SignUpRegisterResponseDTO registerPatient (PatientSignUpRequestDTO requestDTO) {
+        String sanitizedUsername = requestDTO.getEmail().toLowerCase().trim();
+
+        // Duplicate check
+        if(userRepository.existsByUsername(sanitizedUsername)) {
+            throw new DuplicateEmailIdResourceException("User already exists with email: " + sanitizedUsername);
+        }
+
+        // Assign patient role
+        RoleEntity patientRole = roleRepository.findByRolesName(RolesType.PATIENT)
+                .orElseThrow(() -> new PatientNotFoundException("Role PATIENT not found in DB"));
+
+        // 3. Create & Save UserEntity
+        UserEntity userEntity = UserEntity.builder()
+                .username(sanitizedUsername)
+                .name(requestDTO.getName())
+                .password(passwordEncoder.encode(requestDTO.getPassword()))
+                .providerType(AuthProviderType.EMAIL)
+                .roles(Set.of(patientRole))
+                .build();
+
+        UserEntity userSaved = userRepository.save(userEntity);
+
+        // add address
+        Address addressSaved = Address.builder()
+                .city(requestDTO.getCity())
+                .addressLine(requestDTO.getAddressLine())
+                .pincode(requestDTO.getPincode())
+                .state(requestDTO.getState())
+                .build();
+
+        // 4. Create & Save Patient Profile
+        Patient patient = Patient.builder()
+                .name(requestDTO.getName())
+                .email(requestDTO.getEmail())
+                .birthdate(requestDTO.getBirthdate())
+                .gender(requestDTO.getGender())
+                .BloodGroup(requestDTO.getBloodGroup())
+                .address(addressSaved)
+                .userEntity(userSaved)
+                .createdBy(userSaved) // Self-registered
+                .build();
+
+        patientRepository.save(patient);
+
+        String name = requestDTO.getName();
+
+        String text = "Hello " + name + ", welcome to the  family. " +
+                "Your health and comfort are our top priorities. Wishing you a speedy recovery👩🏻‍⚕️";
+
+        log.info("Patient onboarded successfully via direct registration: {}", sanitizedUsername);
+
+        // 5. Tokens Generation after saving
+        String accessToken = authJwtUtil.generateAccessToken(userSaved);
+        RefreshTokenRedisDTO refreshToken = refreshTokenService.CreateRefreshToken(userSaved.getUsername());
+
+        return new SignUpRegisterResponseDTO(
+                userSaved.getId(),
+                userSaved.getUsername(),
+                accessToken,
+                refreshToken.getToken(),
+                text
+        );
     }
 
     // Logout Flow
@@ -116,85 +200,89 @@ public class AuthService {
     // Refresh token Rotation
     public LoginResponseDTO refresh(RefreshRequestDTO request) {
 
-        // 1. frontent ne jo token bheja hai usko find krta hai . ager hai toh sahi varna exception throw krta hai.
+        // 1. frontend ne jo token bheja hai usko find krta hai . ager hai toh sahi varna exception throw krta hai.
         RefreshTokenRedisDTO oldToken = refreshTokenService.getTokenFromRedisOrDB(request.getRefreshToken());
 
         // 2. this token still valid or not
         refreshTokenService.verifyExpired(oldToken);
         // 🔄 Rotation (Ab ye hume naya DTO dega)
         RefreshTokenRedisDTO newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
-        // 3. get user from oldToken
-        // 3. UserEntity nikalne ka sahi tarika (Repository se fetch karo)
-        // oldToken.getUsername() ya oldToken.getUserId() use karke DB hit karo
-        UserEntity user = userRepository.findById(newRefreshToken.getId());
-        // 🔥 LAZY FIX
-//        user.getRoles().size();
-        // 4. Rotate New RefreshToken
-//        RefreshTokenRedisDTO newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
+
+        // Fetch user linked to this token
+        UserEntity user = userRepository.findByUsername(newRefreshToken.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found for token"));
+
         // 5. Generate NewAccessToken
         String NewAccessToken = authJwtUtil.generateAccessToken(user);
-        // 6. User ko naya Access token aur wahi purana Refresh token wapas bhej diya jata hai.
+        // 6. User ko naya Access token aur wahi Purana Refresh token apps bhej diya jata hai.
         return new LoginResponseDTO(NewAccessToken, newRefreshToken.getToken(),user.getId());
     }
-
-
 
 
 
     // OAuth2 with Google ke methods
     // --> I use username field like email also. 👍❤️‍🩹
     @Transactional
-    public ResponseEntity<LoginResponseDTO> handleOAuth2LoginRequest(OAuth2User oAuth2User, String registrationId) {
+    public LoginResponseDTO handleOAuth2LoginRequest(OAuth2User oAuth2User, String registrationId) {
 
         //--> fetch AuthProviderType and ProviderId (Ex.Google,Github) kaha se login kiya hai.
         AuthProviderType authProviderType = authJwtUtil.getProviderTypeFromRegistrationId(registrationId);
         // --> ProviderId
         String providerId = authJwtUtil.getProviderIdFromOAuth2User(oAuth2User,registrationId);
 
-        // --> check this ProviderId and ProviderType ka user pahile se Database me hai kya ? ager nahi Create kro (// save AuthProviderType and ProviderId info with user )
+        // lekin hamesha signup ke time email nahi milta .
+        String determinedUsername = authJwtUtil.getDetermineUsernameAndEmailFormOAuth2user(oAuth2User,registrationId,providerId);  //--> find username or email
+
+        //--> Kabhi kabuki humne email id bhi multi hai . Ager milti hai toh usko Save krlo 👍
+        String email = oAuth2User.getAttribute("email");
+        if(email != null) {
+            email = email.toLowerCase().trim(); // --> case sensitive
+        }
+
+        // --> check this ProviderId and ProviderType ka user file se Database me hai kya ? ager nahi Create kro (// save AuthProviderType and ProviderId info with user )
         UserEntity userEntity = userRepository.findByProviderIdAndProviderType(providerId,authProviderType).orElse(null);
 
-        //--> Kabhi kabhi humne email id bhi milti hai . Ager milti hai toh usko Save krlo 👍
-        String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
-        email = email.toLowerCase().trim();  // --> case sensitive
-
-        // --> Same Email wala banda firse login nahi kr sakta fir wo Dusre Provider sahi kyu na ho ( Ager google ke ek eamil id se login kiya hai toh github se bhi us email id se login nahi kr sakta 🔥👍)
-        //UserEntity emailUser = userRepository.findByUsername(email).orElse(null);  //--> normal
-        //UserEntity emailUser = (email == null ) ? null : userRepository.findByUsername(email).orElse(null); // --> modify
+        // --> Same Email wala banda firse login nahi kr data fir wo Dusre Provider sahi kyu na ho ( Ager google ke ek eamil id se login kiya hai toh github se bhi us email id se login nahi kr sakta 🔥👍)
          //--> better and readable version
-        UserEntity emailUser = null;
-        if (email != null && !email.isBlank()) {
-            emailUser = userRepository.findByUsername(email).orElse(null);
-        }
+        UserEntity emailUser = (email != null && !email.isBlank()) ?
+                userRepository.findByUsername(email).orElse(null) : null;
+
 
        // --> Ager email null or user (userEntity) bhi null he toh User new hai
         if(userEntity == null && emailUser == null){
-
+            // SCENARIO A: Fresh User -> AAPKA `signupInternal` METHOD USE HO RAHA HAI!
             // then Signup first
-            // lekin hamesha signup ke time email nahi milta .
-            String username = authJwtUtil.getdetermineUsernameAndemailformOAuth2user(oAuth2User,registrationId,providerId);  //--> find username or email
-            // get user
-            userEntity = signupInternal(new SignUpRequestDTO(username, null, name,Set.of(RolesType.PATIENT)),authProviderType ,providerId); // --> password is null because ager provider google hai toh sirf email id se signup hoga usme password ki jarurat nhi.
-                                                                                            // --> jab bhi OAuth2 ke flow se user ban raha hum use patient bana rahe hai.
+            SignUpRequestDTO signUpRequestDTO = new SignUpRequestDTO(
+                    determinedUsername,
+                    null,  // --> password is null because ager provider google hai toh sirf email id se signup hoga use password ki array nhi.
+                    oAuth2User.getAttribute("name")
+            );
+                userEntity = signupInternal(signUpRequestDTO,authProviderType ,providerId);
+                log.info("New User created via signupInternal: {}", userEntity.getUsername());
+
             // Ager us time pr Email nahi mila jab wo signup kr raha tha . lekin baad me de email add kr krna chahta ho toh usko save kro
-        } else if(userEntity != null){
-            if(email != null && !email.isBlank() && !email.equals(userEntity.getUsername())){  // email mila hai or wo email apke username se match nahi krta.
-             userEntity.setUsername(email);
-             userRepository.save(userEntity);
-            }
+        } else if(userEntity == null && emailUser != null){
+            // SCENARIO B: Account Linking (Email already bloack hone ki jagah link hoga)
+            userEntity = emailUser;
+            userEntity.setProviderId(providerId);
+            userEntity.setProviderType(authProviderType);
+            userRepository.save(userEntity);
+            log.info("Linked provider {} to existing email: {}", authProviderType, email);
+
         } else {
-            // ager apka user null hai or emailuser notNull hai tohh
-            throw new BadCredentialsException("This email is already register with provider : " + emailUser.getProviderType());
+            // SCENARIO C: Regular OAuth2 Returning User -> // email mila hai or wo email apke username se match nahi krta.
+            if (email != null && !email.isBlank() && !email.equals(userEntity.getUsername())) {
+                userEntity.setUsername(email);
+                userRepository.save(userEntity);
+            }
         }
 
-        // --> Refresh Token generate karo (Yahan 'email' hi username hai)
+        // tokens Generation
+        String accessToken = authJwtUtil.generateAccessToken(userEntity);
         String refreshToken = refreshTokenService.CreateRefreshToken(userEntity.getUsername()).getToken();
 
         //Login
-        LoginResponseDTO loginResponseDTO = new LoginResponseDTO(authJwtUtil.generateAccessToken(userEntity),
-                        refreshToken,userEntity.getId());
+        return new LoginResponseDTO(accessToken,refreshToken,userEntity.getId());
 
-        return ResponseEntity.ok(loginResponseDTO);
     }
 }

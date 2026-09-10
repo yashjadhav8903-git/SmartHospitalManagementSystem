@@ -1,5 +1,5 @@
 package com.example.HospitalManagement.Repository;
-import com.example.HospitalManagement.Entity.EntityType.Appointment;
+import com.example.HospitalManagement.Entity.Appointment;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
 import com.example.HospitalManagement.Projection.ForAppointmens.AppointmentProjection;
@@ -22,6 +22,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
              LocalDateTime appointmentTime,
              List<AppointmentStatus> statuses
      );
+
+    boolean existsByDoctorIdAndDoctorUserEntityUsername(Integer doctorId, String username);
 
 
 
@@ -54,18 +56,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     Page<AppointmentProjection> findAppointmentWithPage(@Param("doctorId") Integer doctorId,Pageable pageable);
 
     //--->GetAppointmentById
-    @Query("""
-           select a.id as appointmentId,
-                a.appointmentTime as appointmentTime,
-                a.reason as appointmentReason,
-                p.name as patientName,
-                d.name as doctorName
-                from Appointment a
-                join a.patient p
-                join a.doctor d
-            where p.id = :patientId
-           """)
-    Page<AppointmentProjection> findAppointmentByPatientId(@Param("patientId") Integer patientId, Pageable pageable);
+//    @Query("""
+//           select a.id as appointmentId,
+//                a.appointmentTime as appointmentTime,
+//                a.reason as appointmentReason,
+//                p.name as patientName,
+//                d.name as doctorName
+//                from Appointment a
+//                join a.patient p
+//                join a.doctor d
+//            where p.id = :patientId
+//           """)
+    Page<Appointment> findAppointmentByPatientId(@Param("patientId") Integer patientId, Pageable pageable);
 
     Page<Appointment> findAppointmentBydoctorId(Integer doctorId, Pageable pageable);
+
+    boolean existsByPatientIdAndPatientUserEntityUsername(Integer patientId, String username);
 }

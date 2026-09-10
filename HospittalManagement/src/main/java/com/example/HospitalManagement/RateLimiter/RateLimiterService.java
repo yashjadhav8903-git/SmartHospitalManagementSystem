@@ -8,8 +8,9 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
 @Service
-@Repository
 @RequiredArgsConstructor
 public class RateLimiterService {
 
@@ -20,13 +21,15 @@ public class RateLimiterService {
         // RRateLimiter ko object chahiye hota hai redissonClient se . object means Key
         RRateLimiter limiter = redissonClient.getRateLimiter("rate::Limiter:" + key);
 
-        // then check key/limiter.
-        if(!limiter.isExists()){
-            // ager limiter not exists then set this rule instent of old rule
-            limiter.trySetRate(RateType.OVERALL,limit,duration,unit);
-        }
+        // ager limiter not exists then set this rule instent of old rule
+        // Try setting the rate. If it already exists, this safely returns false without overwriting.
+        limiter.trySetRate(RateType.OVERALL,limit,duration,unit);
+
+        // Key retention policy to clean unused Redis keys
+        limiter.expireAsync(Duration.ofMinutes(10));
+
         // Permission check "Kya main is request ko jaane doon?"
-        return limiter.tryAcquire();
+        return limiter.tryAcquire(1);
     }
 }
 // --> limiter.tryAcquire() ---> 1 .Redisson/limiter se permission mangta hai ki "Kya main is request ko jaane doon?" .

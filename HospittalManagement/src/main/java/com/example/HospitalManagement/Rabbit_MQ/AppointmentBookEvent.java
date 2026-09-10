@@ -1,7 +1,6 @@
 package com.example.HospitalManagement.Rabbit_MQ;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.example.HospitalManagement.Rabbit_MQ.EventDTOs.BookingEventDTO;
 import org.springframework.context.ApplicationEvent;
 
 // --> Event Class

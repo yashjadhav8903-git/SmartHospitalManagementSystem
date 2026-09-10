@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.SpringSecurity;
 
+import com.example.HospitalManagement.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,7 @@ public class CustomUserService implements UserDetailsService {
     @Override
     @Cacheable("users")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return (UserDetails) userRepository.findByUsername(username).orElseThrow();
+        return userRepository.findByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException("username not found " + username));
     }
 }

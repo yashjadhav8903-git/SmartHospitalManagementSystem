@@ -2,6 +2,24 @@ version: '3.8'
 
 
 services:
+  # --- PostgreSQL Database ---
+  my-postgres:
+    image: postgres:15-alpine
+    container_name: hospital-postgres-container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: SpringBootHospitalManagementSystem_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yash3035
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d SpringBootHospitalManagementSystem_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   my-redis:
     image: redis:latest
     container_name: hospital-redis-container
@@ -14,6 +32,11 @@ services:
     ports:
       - "5673:5672"     # Bahar ka main port 5672 se badal kar 5673 kar diya
       - "15673:15672"   # UI dashboard ka port 15672 se badal kar 15673 kar diya
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app-instance1:
     build: .
@@ -21,16 +44,19 @@ services:
     container_name: hospital-app-1
     environment:
       - INSTANCE_NAME=hospital-app-1
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - DOCKER_REDIS_HOST=my-redis
-      - DOCKER_REDIS_PORT=6379
+      - DOCKER_REDIS_PORT=6379                        # <--- Internal Docker network port
       - DOCKER_RABBIT_HOST=my-rabbitmq
       - DOCKER_RABBIT_PORT=5672
-      - DB_HOST=host.docker.internal
+      - DB_HOST=my-postgres
+      - DB_PORT=5432
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}          # <--- Docker ko Windows se key pass hogi
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}  # <--- Docker ko Windows se secret pass hoga
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
     depends_on:
+      - my-postgres
       - my-redis
       - my-rabbitmq
 
@@ -40,16 +66,19 @@ services:
     container_name: hospital-app-2
     environment:
       - INSTANCE_NAME=hospital-app-2
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - DOCKER_REDIS_HOST=my-redis
       - DOCKER_REDIS_PORT=6379
       - DOCKER_RABBIT_HOST=my-rabbitmq
       - DOCKER_RABBIT_PORT=5672
-      - DB_HOST=host.docker.internal
+      - DB_HOST=my-postgres
+      - DB_PORT=5432
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}          # <--- Docker ko Windows se key pass hogi
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}  # <--- Docker ko Windows se secret pass hoga
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
     depends_on:
+      - my-postgres
       - my-redis
       - my-rabbitmq
 
@@ -63,3 +92,25 @@ services:
     depends_on:
         - app-instance1
         - app-instance2
+  # --- Prometheus (Metrics Scraper) ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hospital-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    # --- Grafana (Visual Dashboard) ---
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hospital-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:

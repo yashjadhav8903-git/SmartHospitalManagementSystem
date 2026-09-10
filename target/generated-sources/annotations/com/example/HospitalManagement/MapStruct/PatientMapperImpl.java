@@ -1,10 +1,10 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.InsurancesDTO.InsuranceResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AllPatientDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientInsuranceResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.PatientPostResponseDTO;
+import com.example.HospitalManagement.DTO.InsurancesDTO.InsuranceResponseDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.AllPatientDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientInsuranceResponseDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostRequestDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostResponseDTO;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
 import javax.annotation.processing.Generated;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-06-15T11:45:39+0530",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Microsoft)"
+    date = "2026-09-08T22:23:38+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
 public class PatientMapperImpl implements PatientMapper {
@@ -58,7 +58,7 @@ public class PatientMapperImpl implements PatientMapper {
 
         PatientPostResponseDTO patientPostResponseDTO = new PatientPostResponseDTO();
 
-        patientPostResponseDTO.setBloodGroup( patient.getBloodGroup() );
+        patientPostResponseDTO.setId( patient.getId() );
         patientPostResponseDTO.setName( patient.getName() );
         patientPostResponseDTO.setEmail( patient.getEmail() );
         patientPostResponseDTO.setGender( patient.getGender() );

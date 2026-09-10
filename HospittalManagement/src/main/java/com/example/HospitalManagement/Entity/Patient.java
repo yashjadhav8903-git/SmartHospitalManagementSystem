@@ -1,14 +1,12 @@
 package com.example.HospitalManagement.Entity;
 
-import com.example.HospitalManagement.Entity.EntityType.Appointment;
-import com.example.HospitalManagement.Entity.EntityType.Blood_Group_type;
+import com.example.HospitalManagement.AddressInfo.Address;
+import com.example.HospitalManagement.Enums.Blood_Group_type;
 import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Fetch;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,14 +31,17 @@ public class Patient {
     @Column(nullable = false,length = 100)
     private String name;
 
-//    @Column(unique = true,nullable = false)
+    @Column(unique = true,nullable = false)
     private String email;
 
-//    @Column(nullable = false)
+
     private LocalDate birthdate;
 
-//    @Column(nullable = false,length = 25)
+
     private String gender;
+
+    @Embedded
+    private Address address;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -51,7 +52,6 @@ public class Patient {
     private Blood_Group_type BloodGroup;
 
     @OneToOne
-//    @MapsId ///--> where the child shares the same Primary Key as the parent.(patient_id and userEntity_id are same both use that ,there own perpective or usecase)
     // Optional login account
     @JoinColumn(name = "user_id")
     private UserEntity userEntity;
@@ -64,7 +64,7 @@ public class Patient {
 
 
     @OneToOne (cascade = {CascadeType.REMOVE,CascadeType.MERGE,CascadeType.PERSIST},orphanRemoval = true)                    //--> Owning Side
-    private Insurance insurance; ///--> Patient and Insurance Connection that it !
+    private PatientInsurance insurance; ///--> Patient and Insurance Connection that it !
                                  ///--> One to One Mapping One Patient have only one Insurance's
     //--> Find Patient by Insurance_Id
 

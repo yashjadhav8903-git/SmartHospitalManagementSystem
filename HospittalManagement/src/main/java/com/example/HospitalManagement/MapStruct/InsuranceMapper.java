@@ -1,8 +1,9 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.InsurancesDTO.AssignInsuranceToPatientsRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.AssignInsurancePatientResponseDTO;
-import com.example.HospitalManagement.Entity.Insurance;
+import com.example.HospitalManagement.DTO.InsurancesDTO.AssignInsuranceToPatientsRequestDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.AssignInsurancePatientResponseDTO;
+
+import com.example.HospitalManagement.Entity.PatientInsurance;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -11,11 +12,12 @@ public interface InsuranceMapper {
 
     // --> Request to Entity
 
-    @Mapping(source = "providerName",target = "provider")
-    Insurance toInsuranceEntity(AssignInsuranceToPatientsRequestDTO assignInsuranceToPatients);
+    PatientInsurance toInsuranceEntity(AssignInsuranceToPatientsRequestDTO assignInsuranceToPatients);
 
     // --> Entity to Response
     @Mapping(source = "patient.id",target = "patientId")
     @Mapping(source = "patient.name",target = "patientName")
-    AssignInsurancePatientResponseDTO EntityToResponse(Insurance insurance);
+    @Mapping(source = "insurancePlan.provider",target = "providerName")
+    @Mapping(source = "insurancePlan.insuranceType",target = "insuranceType")
+    AssignInsurancePatientResponseDTO EntityToResponse(PatientInsurance insurance);
 }

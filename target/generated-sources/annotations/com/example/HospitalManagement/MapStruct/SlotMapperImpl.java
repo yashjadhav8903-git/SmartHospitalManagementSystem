@@ -1,6 +1,6 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.SlotDTO.SlotResponseDTO;
+import com.example.HospitalManagement.DTO.SlotDTO.SlotResponseDTO;
 import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-06-15T11:45:39+0530",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Microsoft)"
+    date = "2026-09-08T22:23:38+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
 public class SlotMapperImpl implements SlotMapper {

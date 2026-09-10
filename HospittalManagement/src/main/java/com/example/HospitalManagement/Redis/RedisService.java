@@ -4,6 +4,7 @@ import com.example.HospitalManagement.RefreshTokenConfg.RefreshTokenRedisDTO;
 import com.example.HospitalManagement.RefreshTokenConfg.RefreshTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ public class RedisService {
 
     private static final String REDIS_PREFIX = "REFRESH_TOKEN:";
     // 1 --> Generate unique key and Add Prefix
+    @NotNull
     private String getKey(String token){
         return REDIS_PREFIX + token;
     }

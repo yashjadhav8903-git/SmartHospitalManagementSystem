@@ -2,6 +2,8 @@ package com.example.HospitalManagement.Entity.EntityType;
 
 
 import java.time.DayOfWeek;
+
+import com.example.HospitalManagement.Entity.Doctor;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalTime;

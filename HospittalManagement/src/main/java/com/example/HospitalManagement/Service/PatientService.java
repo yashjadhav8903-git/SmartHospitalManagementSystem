@@ -1,19 +1,25 @@
 package com.example.HospitalManagement.Service;
 
-//import com.example.HospitalManagement.EmailServices.NormalEmailService;
-import com.example.HospitalManagement.Entity.DTO.PatientsDTO.*;
+import com.example.HospitalManagement.CustomAnnotations.AuditLog;
+import com.example.HospitalManagement.DTO.PatientsDTO.AllPatientDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientInsuranceResponseDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostRequestDTO;
+import com.example.HospitalManagement.DTO.PatientsDTO.PatientPostResponseDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.SignUpRequestDTO;
 import com.example.HospitalManagement.Entity.EntityType.UserEntity;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.RolesType;
+import com.example.HospitalManagement.ExceptionHandling.DuplicateEmailIdResourceException;
+import com.example.HospitalManagement.ExceptionHandling.PatientNotFoundException;
 import com.example.HospitalManagement.MapStruct.PatientMapper;
-import com.example.HospitalManagement.Projection.ForPatients.GetAllPatientProjection;
+import com.example.HospitalManagement.OAuth2Google.AuthProviderType;
 import com.example.HospitalManagement.Projection.ForPatients.PatientInsuranceProjection;
-import com.example.HospitalManagement.Projection.ForPatients.PatientSummaryPage;
 import com.example.HospitalManagement.Redis.PageResponseDTO;
-import com.example.HospitalManagement.Redis.RedisConfig;
 import com.example.HospitalManagement.Repository.PatientRepository;
-import com.example.HospitalManagement.SpringSecurity.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.HospitalManagement.Repository.RoleRepository;
+import com.example.HospitalManagement.SpringSecurity.AuthService;
+import com.example.HospitalManagement.Repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +28,12 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,31 +41,42 @@ import java.util.stream.Collectors;
 
 
 public class PatientService {
+    private final RoleRepository roleRepository;
 
     private final PatientRepository patientRepository;
     private final ModelMapper modelMapper;
+    private final ObjectMapper objectMapper;
     private final PatientMapper patientMapper;
     private final UserRepository userRepository;
+    private final AuthService authService;
     private final RedisTemplate<String, Object> redisTemplate;
 
-//    private final NormalEmailService normalEmailService;
 
     @Transactional
     @PreAuthorize("hasAuthority('Patient:Read')")
+    @AuditLog(action = "Get_All:Patient", resource = "Patient")
     public PageResponseDTO<AllPatientDTO> getAllPatient(Pageable pageable) {
+
         int pageNumber = pageable.getPageNumber();
         //*** --> patient key is pageNumber
-        // only for 5 page caching
-        if (pageNumber < 5) {
+        // only for 5 pages caching after that data come to Database
+        if (pageNumber <= 5) {
             String key = "Patient::" + pageNumber + ":" + pageable.getPageSize() + ":" + pageable.getSort().toString();
 
             // redis se data fetch
-            PageResponseDTO<AllPatientDTO> cached = (PageResponseDTO<AllPatientDTO>) redisTemplate.opsForValue().get(key);
+            Object rawData = redisTemplate.opsForValue().get(key);
 
-            if (cached != null) {
+            if (rawData != null) {
                 log.info("Fetching Data from Redis for Patient Page: {}", pageNumber);
-                return cached;   // Seedha DTO return karo
+                return objectMapper.convertValue(
+                        rawData,objectMapper.getTypeFactory()
+                                .constructParametricType(
+                                        PageResponseDTO.class,
+                                        AllPatientDTO.class
+                                )
+                );
             }
+
             // redis miss
             log.info("Redis Cache miss  --> DB Hit : {}", pageNumber);
             Page<Patient> patients = patientRepository.findAll(pageable);
@@ -89,126 +102,88 @@ public class PatientService {
             return dtoResponse;
 
         } else {
-            // After 5 page Data come for DB
+            // After 5 pages Data come for DB
             log.info("Skipping Cache for page : {}", pageNumber);
             Page<Patient> patients = patientRepository.findAll(pageable);
-            return (PageResponseDTO<AllPatientDTO>) patients.map(patientMapper::EntitytoDTO);
+
+            List<AllPatientDTO> dtoList = patients.getContent()
+                    .stream().map(patientMapper::EntitytoDTO)
+                    .toList();
+
+            return new PageResponseDTO<>(
+                    dtoList,
+                    patients.getNumber(),
+                    patients.getSize(),
+                    patients.getTotalElements(),
+                    patients.getTotalPages()
+            );
         }
     }
 
 
     @Transactional
+    @Cacheable(value = "patients",key = "#patientId")
     @PreAuthorize("hasAuthority('Patient:Read') and #patientid == authentication.principal.id")
-    public AllPatientDTO getPatientById(Integer patientid) throws Exception {
+    @AuditLog(action = "Get_Patient:Id", resource = "Patient")
+    public AllPatientDTO getPatientById(Integer patientId) throws Exception {
 
-        // manuall caching
-        String key = "Patient::" + patientid; // --> patient Id is key
+        log.info("Fetching Patient Data from Database for PatientId: {}", patientId);
 
-        //Redis check
-        AllPatientDTO cachingPatient = (AllPatientDTO) redisTemplate.opsForValue().get(key);
-        // Fetching Data from Redis
-        if (cachingPatient != null) {
-            log.info("Fetching Data from Redis for PatientId : {}", patientid);
-            return cachingPatient;
-        }
-
-        log.info("Fetching Patient Data from DataBase for PatientId: {}", patientid);
         // Fetching Data from Database
-        Patient patients = patientRepository.findById(patientid).orElseThrow(() ->
-                new Exception("Patient Not Found at this Patient Id" + patientid));
-        AllPatientDTO allPatientDTO = patientMapper.EntitytoDTO(patients);
+        Patient patients = patientRepository.findById(patientId)
+                .orElseThrow(() ->
+                        new PatientNotFoundException("Patient Not Found at this Patient Id : " + patientId));
+        return patientMapper.EntitytoDTO(patients);
 
-        // save in redis
-        redisTemplate.opsForValue().set(
-                key,   // --> patient key
-                allPatientDTO,  //--> save DTO instant of Entity
-                Duration.ofHours(3)  //--> 3 hours ke baad data redis ke delete ho jayega.
-        );
-        return allPatientDTO;
     }
 
 
     // --> Post mapping
     @Transactional
+    @CacheEvict(value = "patients",allEntries = true)
     @PreAuthorize("hasAuthority('Patient:Write')")
-    public PatientPostResponseDTO NewPatient(PatientPostRequestDTO patientPostRequestDTO, UserEntity adminUser) {
+    @AuditLog(action = "OnBoarding_Patient", resource = "Patient")
+    public PatientPostResponseDTO NewPatient(PatientPostRequestDTO dto, String loggedUser) {
         //1
-        UserEntity user = userRepository.findById(adminUser.getId());
-        if (patientRepository.existsById(adminUser.getId())) {
-            throw new RuntimeException("Patient already exists for this user");
+        UserEntity currentUser = userRepository.findByUsername(loggedUser)
+                .orElseThrow(() -> new RuntimeException("User not found: " + loggedUser));;
+
+        // 2. Check if Admin is creating for someone else OR user is creating their own profile
+        boolean isAdmin = currentUser.getRoles().stream()
+                .anyMatch(role -> role.getRolesName().equals(RolesType.ADMIN));
+
+        UserEntity targetUser = isAdmin
+                ? userRepository.findByUsername(dto.getEmail())
+                .orElseGet(() -> authService.signupInternal(
+                        new SignUpRequestDTO(
+                                dto.getEmail(),
+                                "TempPassword@123",
+                                dto.getName()),
+                        AuthProviderType.EMAIL,
+                        null
+                ))
+                : currentUser;
+
+        if (patientRepository.existsById(targetUser.getId())) {
+            throw new DuplicateEmailIdResourceException("This Email-ID " + dto.getEmail() + " address is already associated with an existing profile. " +
+                    "Please use a different email or Sign In with your current details.");
         }
-        Patient NewPatient = patientMapper.userToEnity(patientPostRequestDTO);
-        NewPatient.setUserEntity(user);
-        NewPatient.setCreatedBy(adminUser); // -->
+        Patient NewPatient = patientMapper.userToEnity(dto);
+        NewPatient.setUserEntity(targetUser);
+        NewPatient.setCreatedBy(currentUser); // -->
         Patient patient = patientRepository.save(NewPatient);
         // Single patient cache delete
-        redisTemplate.delete("Patient: " + patient.getId());
+        redisTemplate.delete("Patient::" + patient.getId());
 
-        // Delete Page wala data
-        Set<String> keys = redisTemplate.keys("Patient::*");
-        if(keys != null && !keys.isEmpty()){
-           redisTemplate.delete(keys);
-        }
-        // upgrade role
-        user.getRoles().add(RolesType.PATIENT);
-        userRepository.save(user);
-//        normalEmailService.sendHtmlEmail(patient.getEmail(),patient.getName());
         return patientMapper.EntityToUser(patient);
 
-
-
 }
-    //  ye hi toh projection ko DTO me Convert hota hai. (Interface Projection)
-    public List<PatientInterfaceProjectionDTO> getPatientSummary(){
-            return patientRepository.findPatientSummary(Sort.by(Sort.Direction.ASC, "id"))//--> projection method Convert into DTO/List and sort by ID
-                    .stream()
-                    .map(patient -> modelMapper.map(patient, PatientInterfaceProjectionDTO.class))
-                    .toList();
-    }
-    // Interface Projection by ID
-    public PatientInterfaceProjectionDTO getPatientSummaryById(Integer id){
-            Patient patient = (Patient) patientRepository.findById(id).orElseThrow(()->
-                    new EntityNotFoundException("Patient Not Found at this Patient Id" + id));
-            return modelMapper.map(patient,PatientInterfaceProjectionDTO.class);
-    }
-
-
-    //ye hi toh projection ko DTO me Convert hota hai. (Constructor Projection)
-    public List<PatientResponseConstructorDTO> getPatientConstructorSummary(){
-            return patientRepository.findPatientSummaryConstructor(Sort.by(Sort.Direction.ASC,("id")))
-                    .stream()
-                    .map(patient -> modelMapper.map(patient, PatientResponseConstructorDTO.class))
-                    .toList();
-
-    }
-
-
-    //pagination
-//    public Page<PatientPageResponseDTO> getPatientWithPage(Pageable pageable){
-//        Page<PatientPageResponseDTO> patientWithPage = patientRepository.findPatientWithPage(pageable);
-//        return patientWithPage.map(patient ->
-//                modelMapper.map(patient, PatientPageResponseDTO.class));
-//    }
-
-
-    // Same Logic Pagination
-    public Page<PatientPageResponseDTO> getPatientWithPage (Pageable pageable){
-            return patientRepository.findPatientWithPage(pageable);
-    }
-
-    // page with Interface
-    public Page<PatientSummaryPage> getPatientWithPageInterface(Pageable pageable){
-            return patientRepository.findPatientWithPageInterface(pageable);
-    }
 
     // -->GetAllPatientWithInsuranceWithMapstruct
     @Transactional
-//    @PreAuthorize("hasRole('ADMIN')")
     @PreAuthorize("hasAuthority('Insurance:Read')")
     public Page<PatientInsuranceResponseDTO> getAllPatientWithInsurance(Pageable pageable){
             Page<PatientInsuranceProjection> page = patientRepository.getAllPatientWithInsurance(pageable);
             return page.map(patientMapper::toDTO);
     }
-
-
 }

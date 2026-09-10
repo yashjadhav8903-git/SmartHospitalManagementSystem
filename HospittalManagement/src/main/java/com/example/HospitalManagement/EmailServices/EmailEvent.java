@@ -1,17 +1,10 @@
 package com.example.HospitalManagement.EmailServices;
 
-import com.example.HospitalManagement.Entity.EntityType.Appointment;
-import com.example.HospitalManagement.Entity.EntityType.Doctor;
-import com.example.HospitalManagement.Entity.Patient;
-import com.example.HospitalManagement.Enums.AppointmentStatus;
-import com.example.HospitalManagement.Rabbit_MQ.BookingEventDTO;
-import com.example.HospitalManagement.Rabbit_MQ.CancelEventDTO;
-import jakarta.mail.MessagingException;
+import com.example.HospitalManagement.Rabbit_MQ.EventDTOs.BookingEventDTO;
+import com.example.HospitalManagement.Rabbit_MQ.EventDTOs.CancelEventDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 
 
 @Service

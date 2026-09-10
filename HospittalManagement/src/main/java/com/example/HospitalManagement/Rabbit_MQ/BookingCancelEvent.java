@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.Rabbit_MQ;
 
+import com.example.HospitalManagement.Rabbit_MQ.EventDTOs.CancelEventDTO;
 import org.springframework.context.ApplicationEvent;
 
 public class BookingCancelEvent extends ApplicationEvent {

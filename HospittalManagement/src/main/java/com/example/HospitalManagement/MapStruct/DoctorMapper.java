@@ -1,10 +1,10 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.DepartmentsDTO.DepartmentResponseDeptDTO;
-import com.example.HospitalManagement.Entity.DTO.DepartmentsDTO.DoctorResponseDeptDTO;
-import com.example.HospitalManagement.Entity.DTO.DoctorsDTO.DoctorPOSTRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.DoctorsDTO.DoctorPOSTResponseDTO;
-import com.example.HospitalManagement.Entity.EntityType.Doctor;
+import com.example.HospitalManagement.DTO.DepartmentsDTO.DepartmentResponseDeptDTO;
+import com.example.HospitalManagement.DTO.DepartmentsDTO.DoctorResponseDeptDTO;
+import com.example.HospitalManagement.DTO.DoctorsDTO.DoctorPOSTRequestDTO;
+import com.example.HospitalManagement.DTO.DoctorsDTO.DoctorPOSTResponseDTO;
+import com.example.HospitalManagement.Entity.Doctor;
 import com.example.HospitalManagement.Projection.ForDepartments.DepartmentProjectionDTO;
 import com.example.HospitalManagement.Projection.ForDepartments.DoctorProjectionDTO;
 import org.mapstruct.Mapper;

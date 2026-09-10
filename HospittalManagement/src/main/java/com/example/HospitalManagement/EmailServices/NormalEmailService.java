@@ -3,6 +3,7 @@ package com.example.HospitalManagement.EmailServices;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -10,20 +11,21 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NormalEmailService {
 
     private final JavaMailSender javaMailSender;
 
-    // --> *** SendConfirmed Email ( if appointment is save than it Confirmed )
+    // --> *** SendConfirmed Email ( if appointment is saved than it Confirmed )
 
     public void SendConfirmedEmail(String toEmail, String patientName, String doctorName, Integer slot, LocalDate date, Integer AppointmentId, String time, String reason) throws MessagingException {
 
         // Hospital Details (Ek jagah define kar do)
         final String hospitalName = "LifeCare Hospital";
         final String hospitalAddress = "Main Gate ,Pimpri, Pune - 411044";
-        final String contactNumber = "+91 96650 42716";
+        final String contactNumber = "+91 96**********";
         System.out.println("Email logic started for: " + toEmail);
         try{
 
@@ -79,13 +81,13 @@ public class NormalEmailService {
             javaMailSender.send(mimeMessage);
             System.out.println("Email sent successfully to: " + toEmail);
         } catch (MessagingException e){
-            System.out.println("Confirmed Message me koi dhikat.....🥺");
-            e.printStackTrace();
+            System.out.println("Confirmed Message me koi dhikat.....🥺"+ e.getMessage());
+
         }
     }
 
 
-    // --> *** SendPending Email ( if appointment is save than it Pending )
+    // --> *** SendPending Email ( if appointment is saved than it Pending )
     @Async
     public void SendPendingEmail(String toEmail,String reason,Integer appointmentId,String patientName){
         try{
@@ -115,13 +117,14 @@ public class NormalEmailService {
             mimeMessageHelper.setText(htmlContent,true);
             javaMailSender.send(mimeMessage);
         } catch (MessagingException e){
-            System.out.println("Pending Message me koi dhikat.....🥺");
-            e.printStackTrace();
+            System.out.println("Pending Message me koi dhikat.....🥺" + e.getMessage());
+
         }
     }
 
     // --> *** CancelEmail ( if appointment is Cancel )
-    @Async
+
+
     public void CancelledAppointment(String toEmail, String patientName, String doctorName, Integer slot,LocalDate date, Integer AppointmentId, String time, String reason,Integer doctorId){
 
         try{
@@ -146,14 +149,14 @@ public class NormalEmailService {
                     displayTime = odt.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"));
                 }
             } catch (Exception e) {
-                System.out.println("Parsing failed, using raw time string");
+                System.err.println("Parsing failed, using raw time string" + e.getMessage());
             }
 
             // Yahan apna current ngrok address dalo
             String ngrokUrl = "https://jump-hesitancy-reuse.ngrok-free.dev";
             // aaj ki date ke slot's
             LocalDate today = LocalDate.now();
-            String rescheduleUrl = ngrokUrl + "/api/A2/schedule/Slot?docterId=" + doctorId + "&date=" + today;
+            String rescheduleUrl = ngrokUrl + "/api/A2/schedule/Slot?doctorId=" + doctorId + "&date=" + today;
 
             String htmlContent =
                     "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;'>" +
@@ -180,7 +183,6 @@ public class NormalEmailService {
 
                             "<div style='margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #777;'>" +
                             "<p style='margin: 6px 0;'><b>Refund Info: </b> If any payment was made, it will be refunded to your original payment method within 4-5 business days. </p>" +
-//                            "    <p>Please arrive 15 minutes before your scheduled time.</p>" +
                             "    <br><p>Best Regards,<br><strong>LifeCare Hospital Team</strong></p>" +
                             "  </div>" +
                             "</div>";
@@ -190,8 +192,60 @@ public class NormalEmailService {
             System.out.println("Email sent successfully to: " + toEmail);
 
         } catch (MessagingException e){
-            System.out.println("Pending Message me koi dhikat.....🥺");
-            e.printStackTrace();
+            System.err.println("Pending Message me koi dhikat.....🥺");
+        }
+    }
+
+
+    public void SendRescheduledEmail(String toEmail,String patientName, String doctorName, Integer appointmentId,
+                                     LocalDate newDate, String startTime,String endTime){
+
+        String formattedTimeSlot = startTime + " - " + endTime;
+
+        final String hospitalAddress = "Main Gate ,Pimpri, Pune - 411044";
+        final String contactNumber = "+91 96**********";
+
+        try{
+
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage , true);
+
+            mimeMessageHelper.setFrom("LifeCarehospital@gmail.com");
+            mimeMessageHelper.setTo(toEmail);
+            mimeMessageHelper.setSubject("Appointment Rescheduled ! LifeCare Hospital");
+
+
+            String htmlContent =
+                    "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;'>" +
+                            "  <div style='background-color: #fbc02d; padding: 25px; text-align: center;'>" +
+                            "    <h1 style='color: #333; margin: 0;'>Appointment Rescheduled!</h1>" +
+                            "  </div>" +
+                            "  <div style='padding: 30px; color: #333;'>" +
+                            "    <p style='font-size: 16px;'>Dear <strong>" + patientName + "</strong>,</p>" +
+                            "    <p>Your appointment has been <strong>Successfully Rescheduled</strong> to a new time slot as per your request.</p>" +
+                            "    <div style='background: #fffde7; padding: 20px; border-left: 6px solid #fbc02d; border-radius: 4px; margin: 25px 0;'>" +
+                            "      <p style='margin: 8px 0;'><strong>Appointment ID:</strong> #" + appointmentId + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>Doctor:</strong> " + doctorName + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>New Date:</strong> " + newDate + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>New Time Slot:</strong> " + formattedTimeSlot + "</p>" +
+                            "      <p style='margin: 8px 0;'><strong>Status:</strong> <span style='color: #f57f17; font-weight: bold;'>RESCHEDULED 🔄</span></p>" +
+                            "    </div>" +
+                            "    <div style='margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #777;'>" +
+                            "      <p style='margin: 0;'><b>📍 Address:</b> " + hospitalAddress + "</p>" +
+                            "      <p style='margin: 5px 0;'><b>📞 Contact:</b> " + contactNumber + "</p>" +
+                            "      <p>Please arrive 15 minutes before your new scheduled time slot.</p>" +
+                            "      <br><p>Best Regards,<br><strong>LifeCare Hospital Team</strong></p>" +
+                            "    </div>" +
+                            "  </div>" +
+                            "</div>";
+
+            mimeMessageHelper.setText(htmlContent,true);
+            javaMailSender.send(mimeMessage);
+            log.info("Rescheduled Email sent successfully to: {}" , toEmail);
+
+        } catch (MessagingException e) {
+            System.err.println("Rescheduled Message me koi dhikat.....🥺");
+            log.error(e.getMessage());
         }
     }
 }

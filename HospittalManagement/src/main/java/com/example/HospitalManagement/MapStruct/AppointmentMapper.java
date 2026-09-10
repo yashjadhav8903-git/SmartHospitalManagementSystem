@@ -1,7 +1,7 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.*;
-import com.example.HospitalManagement.Entity.EntityType.Appointment;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.*;
+import com.example.HospitalManagement.Entity.Appointment;
 import com.example.HospitalManagement.Projection.ForAppointmens.AppointmentProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,10 +12,10 @@ public interface AppointmentMapper {
 
 
     // 1--> User RequestDTO to Entity(Database) ( postMapping )
-    @Mapping(source = "appointmentTime",target = "appointmentTime")
     @Mapping(source = "appointmentReason",target = "reason")
     @Mapping(target = "slot",ignore = true)
     @Mapping(target = "id",ignore = true)
+    @Mapping(target = "status", ignore = true)
     Appointment UserToEntity(CreateAppointmentRequestDTO dto);
 
     // 2--> Entity to ResponseDTO

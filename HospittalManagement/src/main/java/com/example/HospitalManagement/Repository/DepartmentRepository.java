@@ -1,8 +1,9 @@
 package com.example.HospitalManagement.Repository;
 
-import com.example.HospitalManagement.Entity.EntityType.Department;
+import com.example.HospitalManagement.Entity.Department;
 import com.example.HospitalManagement.Projection.ForDepartments.DepartmentProjectionDTO;
 import com.example.HospitalManagement.Projection.ForDepartments.DoctorProjectionDTO;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,17 +15,19 @@ import java.util.Optional;
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department,Integer> {
 
-    Optional<Department> findByDepartmentNames(String departmentNames);
+    Optional<Department> findByNameIgnoreCase(String departmentNames);
+
+    boolean existsByNameIgnoreCase(String name);
 
     // department by ID
     @Query("""
             select d.id as id,
-            d.departmentNames as departmentNames,
+            d.name as departmentNames,
             d.headDoctor.name as headDoctorName
             from Department d
             where d.id =:id
             """)
-    DepartmentProjectionDTO findDepartmentById(Integer id);
+    Optional<DepartmentProjectionDTO> findDepartmentProjectionById(@Param("id") Integer id);
 
     // Doctor from that Department (Pageable)
     @Query("""
@@ -36,15 +39,15 @@ public interface DepartmentRepository extends JpaRepository<Department,Integer> 
             join d.doctors doc
             where d.id =:id
             """)
-    Page<DoctorProjectionDTO> findDoctorByDepartmentId(Integer id, Pageable pageable);
+    Page<DoctorProjectionDTO> findDoctorByDepartmentId(@Param("id") Integer id, Pageable pageable);
 
 
     // -->GetAllDepartment
     @Query("""
             select d.id as id,
-            d.departmentNames as departmentNames,
+            d.name as departmentNames,
             d.headDoctor.name as headDoctorName
             from Department d
             """)
-    Page<DepartmentProjectionDTO> findAllDepartment(Pageable pageable);
+    Page<DepartmentProjectionDTO> findAllDepartmentProjections(Pageable pageable);
 }

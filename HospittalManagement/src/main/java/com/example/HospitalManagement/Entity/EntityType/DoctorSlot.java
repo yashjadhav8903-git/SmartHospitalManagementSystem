@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.Entity.EntityType;
 
+import com.example.HospitalManagement.Entity.Doctor;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,6 +1,6 @@
 package com.example.HospitalManagement.OAuth2Google;
 
-import com.example.HospitalManagement.Entity.DTO.SpringSecurityDTO.LoginResponseDTO;
+import com.example.HospitalManagement.DTO.SpringSecurityDTO.LoginResponseDTO;
 import com.example.HospitalManagement.SpringSecurity.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -36,11 +36,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Us Token me se OAuth2 User Nikhalna hai
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        ResponseEntity<LoginResponseDTO> loginResponseDTOResponseEntity = authService.handleOAuth2LoginRequest(oAuth2User,registrationId);
+
+        LoginResponseDTO loginResponseDTO =
+                authService.handleOAuth2LoginRequest(oAuth2User,registrationId);
 
         // return loginResponse to Frontent
-        response.setStatus(loginResponseDTOResponseEntity.getStatusCode().value());
+        response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(objectMapper.writeValueAsString(loginResponseDTOResponseEntity.getBody()));
+        response.setCharacterEncoding("UTF-8");
+
+        objectMapper.writeValue(response.getWriter(),loginResponseDTO);
     }
 }

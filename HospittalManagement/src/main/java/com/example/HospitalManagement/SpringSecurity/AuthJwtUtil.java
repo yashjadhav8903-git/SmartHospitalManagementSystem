@@ -8,12 +8,16 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -29,23 +33,82 @@ public class AuthJwtUtil {
     // 1️⃣ Token Generate
     // 4. create token ager user exist krta hai toh
     public String generateAccessToken(UserEntity userEntity){
+
+        // 1. get role from list(userEntity)
+        List<String> roles = userEntity.getRoles()
+                .stream()
+                .map(role ->role.getRolesName().name())
+                .toList();
+
+        // 2. and also get permission from userEntity
+        List<String> permissions = userEntity.getRoles()
+                .stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission -> permission.getPermissionName().getPermissions())
+                .distinct()
+                .toList();
+
         return Jwts.builder()
-                .setSubject(userEntity.getUsername())
-                .claim("UserId",userEntity.getId().toString())
+                .subject(userEntity.getUsername())
+                .claim("UserId", userEntity.getId().toString())
+                .claim("Roles", roles)
+                .claim("Permissions", permissions) // Fine-grained permissions inside JWT!
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*20))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
                 .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     // Username nikalna ( login ke baad filter me )
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSecretKey())  // --> verify krta hai token ke saath kisi ne chhed-chhad toh nahi ki
-                .build()
-                .parseSignedClaims(token)    // ---> Agar token mein space ho ya galat ho, toh yahi par MalformedJwtException aati hai.
-                .getPayload();              // --> Token ke andar ki saari jankari (Claims) utha leta hai
-        return claims.getSubject();         // --> Payload mein se "Subject" (jo ki hamara Username hai) return kar deta hai. ( joki generateAccessToken me setSubject hai )
+       return getClaimsFromToken(token).getSubject();
+    }
+
+    // UserId Extract
+    public String getUserIdFromToken(String token) {
+        return getClaimsFromToken(token).get("UserId", String.class);
+    }
+
+
+
+
+    // Filter ke Zero DB Hit Authoritative Parsing for Authorities
+    @SuppressWarnings("unckecked")
+    public List<GrantedAuthority> getAuthoritiesFromToken(String token) {
+
+        Claims claims = getClaimsFromToken(token);
+
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        List<String> roles = claims.get("Roles", List.class);
+        if(roles != null){
+            roles
+                    .forEach(role -> {
+                        // Agar role me pehle se "ROLE_" laga hai toh wahi rehne do, warna add karo
+                        String roleName = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                        authorities.add(new SimpleGrantedAuthority(roleName));
+                    }
+
+            );
+        }
+
+        List<String> permissions = claims.get("Permissions", List.class);
+        if(permissions != null){
+            permissions.forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission))
+            );
+        }
+
+        return authorities;
+
     }
 
 
@@ -84,7 +147,7 @@ public class AuthJwtUtil {
     }
 
     // --> Ager email mil gaya toh thik nahi toh us providertype ki value ues kr lenge
-    public String getdetermineUsernameAndemailformOAuth2user(OAuth2User oAuth2User,String registrationId,String providerId){
+    public String getDetermineUsernameAndEmailFormOAuth2user(OAuth2User oAuth2User,String registrationId,String providerId){
         // --> Ager email mil gaya toh return email 👍
         String email = oAuth2User.getAttribute("email");
         if(email != null && !email.isBlank()){  // --> email null nahi or blank nahi hai

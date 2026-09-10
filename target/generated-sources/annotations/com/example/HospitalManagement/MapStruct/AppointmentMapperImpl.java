@@ -1,12 +1,12 @@
 package com.example.HospitalManagement.MapStruct;
 
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.AppointmentReAssignResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.AppointmentResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.CancelAppointmentResponseDTO;
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.CreateAppointmentRequestDTO;
-import com.example.HospitalManagement.Entity.DTO.AppointmentsDTO.CreateAppointmentResponseDTO;
-import com.example.HospitalManagement.Entity.EntityType.Appointment;
-import com.example.HospitalManagement.Entity.EntityType.Doctor;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.AppointmentReAssignResponseDTO;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.AppointmentResponseDTO;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.CancelAppointmentResponseDTO;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.CreateAppointmentRequestDTO;
+import com.example.HospitalManagement.DTO.AppointmentsDTO.CreateAppointmentResponseDTO;
+import com.example.HospitalManagement.Entity.Appointment;
+import com.example.HospitalManagement.Entity.Doctor;
 import com.example.HospitalManagement.Entity.EntityType.DoctorSlot;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Enums.AppointmentStatus;
@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-06-15T11:45:39+0530",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Microsoft)"
+    date = "2026-09-08T22:23:37+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
 public class AppointmentMapperImpl implements AppointmentMapper {
@@ -30,7 +30,6 @@ public class AppointmentMapperImpl implements AppointmentMapper {
 
         Appointment.AppointmentBuilder appointment = Appointment.builder();
 
-        appointment.appointmentTime( dto.getAppointmentTime() );
         appointment.reason( dto.getAppointmentReason() );
 
         return appointment.build();
