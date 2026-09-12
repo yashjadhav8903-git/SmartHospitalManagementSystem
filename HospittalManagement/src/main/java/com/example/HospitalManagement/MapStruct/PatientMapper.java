@@ -19,6 +19,7 @@ public interface PatientMapper {
     @Mapping(source = "name",target = "patientName")
     @Mapping(source = "email",target = "patientEmail")
     // 2 . Projection to InsuranceResponseDTO ( source is Projection and target is ResponseDTO )
+    @Mapping(source = "insuranceId", target = "insurance.insuranceId")
     @Mapping(source = "provider",target = "insurance.provider")
     @Mapping(source = "validUntil",target = "insurance.validUntil")
     @Mapping(source = "insuranceType",target = "insurance.insuranceType")

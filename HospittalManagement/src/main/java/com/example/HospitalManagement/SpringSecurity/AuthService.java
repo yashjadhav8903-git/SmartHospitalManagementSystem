@@ -125,6 +125,7 @@ public class AuthService {
 
     @Transactional
     public SignUpRegisterResponseDTO registerPatient (PatientSignUpRequestDTO requestDTO) {
+
         String sanitizedUsername = requestDTO.getEmail().toLowerCase().trim();
 
         // Duplicate check

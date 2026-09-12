@@ -17,7 +17,7 @@ import com.example.HospitalManagement.Repository.InsurancePlanRepository;
 import com.example.HospitalManagement.Repository.PatientInsuranceRepository;
 import com.example.HospitalManagement.Repository.PatientRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -66,7 +66,7 @@ public class InsuranceService {
 
     @Transactional
     @AuditLog(action = "CANCEL_INSURANCE", resource = "Insurance")
-    @PreAuthorize("hasAuthority('Insurance:Operations') or @appointmentSecurity.isPatientOwner(#patientId,authentication.name)")
+    @PreAuthorize("hasAuthority('Insurance:Read') or @patientInsurance.isInsuranceOwner(#patientId, authentication.name)")
     public void cancelInsuranceForPatient(Integer patientId){
 
         log.info("Cancelling insurance policy for patient ID {}", patientId);
@@ -90,7 +90,7 @@ public class InsuranceService {
 
     @Transactional
     @AuditLog(action = "RE-ACTIVE_INSURANCE",resource = "Insurance")
-    @PreAuthorize("hasAuthority('Insurance:Operations') or @appointmentSecurity.isPatientOwner(#patientId,authentication.name)")
+    @PreAuthorize("hasAuthority('Insurance:Read') or @patientInsurance.isInsuranceOwner(#patientId, authentication.name)")
     public AssignInsurancePatientResponseDTO reActiveInsurance(Integer patientId){
 
         log.info("Re-active insurance policy for patient ID {}", patientId);
@@ -117,7 +117,7 @@ public class InsuranceService {
         return insuranceMapper.EntityToResponse(patientInsurance);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public List<InsurancePlanResponseDTO> getInsurancePlans(){
 
@@ -130,7 +130,7 @@ public class InsuranceService {
 
 
 
-    public InsurancePlanResponseDTO toInsurancePlan(InsurancePlan insurancePlan){
+    private InsurancePlanResponseDTO toInsurancePlan(InsurancePlan insurancePlan){
 
         InsurancePlanResponseDTO insurancePlanDTO = new InsurancePlanResponseDTO();
 

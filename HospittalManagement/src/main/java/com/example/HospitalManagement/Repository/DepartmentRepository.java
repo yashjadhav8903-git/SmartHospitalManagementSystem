@@ -22,9 +22,10 @@ public interface DepartmentRepository extends JpaRepository<Department,Integer> 
     // department by ID
     @Query("""
             select d.id as id,
-            d.name as departmentNames,
+            d.name as departmentName,
             d.headDoctor.name as headDoctorName
             from Department d
+            left join d.headDoctor
             where d.id =:id
             """)
     Optional<DepartmentProjectionDTO> findDepartmentProjectionById(@Param("id") Integer id);

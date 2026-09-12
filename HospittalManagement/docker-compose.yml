@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_DB: SpringBootHospitalManagementSystem_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yash3035
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -44,6 +44,8 @@ services:
     container_name: hospital-app-1
     environment:
       - INSTANCE_NAME=hospital-app-1
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - DOCKER_REDIS_HOST=my-redis
       - DOCKER_REDIS_PORT=6379                        # <--- Internal Docker network port
@@ -56,9 +58,13 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
     depends_on:
-      - my-postgres
-      - my-redis
-      - my-rabbitmq
+      my-postgres:
+        condition: service_healthy                             # <--- UPDATED (Waits for DB)
+      my-redis:
+        condition: service_started
+      my-rabbitmq:
+        condition: service_healthy
+
 
   app-instance2:
     build: .
@@ -66,6 +72,8 @@ services:
     container_name: hospital-app-2
     environment:
       - INSTANCE_NAME=hospital-app-2
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - DOCKER_REDIS_HOST=my-redis
       - DOCKER_REDIS_PORT=6379
@@ -78,9 +86,12 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}          # <--- GitHub Key
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}  # <--- GitHub Secret
     depends_on:
-      - my-postgres
-      - my-redis
-      - my-rabbitmq
+     my-postgres:
+      condition: service_healthy                             # <--- UPDATED
+     my-redis:
+      condition: service_started
+     my-rabbitmq:
+      condition: service_healthy
 
   nginx-lb:
     image: nginx:latest

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-09-09T13:34:54+0530",
+    date = "2026-09-12T14:20:44+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
@@ -40,6 +40,10 @@ public class InsuranceMapperImpl implements InsuranceMapper {
 
         assignInsurancePatientResponseDTO.setPatientId( insurancePatientId( insurance ) );
         assignInsurancePatientResponseDTO.setPatientName( insurancePatientName( insurance ) );
+        Long id1 = insuranceInsurancePlanId( insurance );
+        if ( id1 != null ) {
+            assignInsurancePatientResponseDTO.setInsuranceId( id1.intValue() );
+        }
         assignInsurancePatientResponseDTO.setProviderName( insuranceInsurancePlanProvider( insurance ) );
         assignInsurancePatientResponseDTO.setInsuranceType( insuranceInsurancePlanInsuranceType( insurance ) );
         assignInsurancePatientResponseDTO.setPolicyNumber( insurance.getPolicyNumber() );
@@ -76,6 +80,21 @@ public class InsuranceMapperImpl implements InsuranceMapper {
             return null;
         }
         return name;
+    }
+
+    private Long insuranceInsurancePlanId(PatientInsurance patientInsurance) {
+        if ( patientInsurance == null ) {
+            return null;
+        }
+        InsurancePlan insurancePlan = patientInsurance.getInsurancePlan();
+        if ( insurancePlan == null ) {
+            return null;
+        }
+        Long id = insurancePlan.getId();
+        if ( id == null ) {
+            return null;
+        }
+        return id;
     }
 
     private String insuranceInsurancePlanProvider(PatientInsurance patientInsurance) {

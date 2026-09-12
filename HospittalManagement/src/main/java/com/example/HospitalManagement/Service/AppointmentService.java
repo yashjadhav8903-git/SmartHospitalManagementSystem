@@ -25,7 +25,7 @@ import com.example.HospitalManagement.Repository.DoctorSlotRepository;
 import com.example.HospitalManagement.Repository.PatientRepository;
 import com.example.HospitalManagement.Repository.UserRepository;
 import jakarta.mail.MessagingException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -117,6 +117,7 @@ public class AppointmentService {
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")  //---> Ye hi hota hai Ownership Based Access Control
+    @AuditLog(action = "Hard Delete Appointment" , resource = "Admin_Hard_Delete")
     public void RemoveAppointment(Integer appointmentId, Integer patientId){
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(()->
@@ -329,8 +330,8 @@ public class AppointmentService {
     }
 
 
-    //--> getAppointmentByDoctorId
-    @Transactional
+
+    @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and @appointmentSecurity.isDoctorOwner(#doctorId,authentication.name))")
     public List<AppointmentResponseDTO> getAppointmentDoctor(Integer doctorId){
         Doctor doctor = doctorRepository.findById(doctorId)
@@ -341,13 +342,13 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
-    //---> getAppointmentWithProjection
-    @Transactional
+
+    @Transactional(readOnly = true)
     @Cacheable(
             value = "appointments",
             key = "#doctorId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()"
     )
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') @appointmentSecurity.isDoctorOwner(#doctorId,authentication.name))")  //---> Ye hi hota hai Ownership Based Access Control
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and @appointmentSecurity.isDoctorOwner(#doctorId,authentication.name))")  //---> Ye hi hota hai Ownership Based Access Control
     public AppointmentPageResponseDTO<AppointmentResponseDTO> getAppointments(Pageable pageable, Integer doctorId){
 
         log.info("Redis Cache Miss --> DB Hit for Doctor ID: {}", doctorId);
@@ -370,7 +371,7 @@ public class AppointmentService {
                 );
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Cacheable(
             value = "patient_appointment",
             key = "#patientId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize"
@@ -395,7 +396,6 @@ public class AppointmentService {
                 appointmentPage.getTotalElements(),
                 appointmentPage.getTotalPages()
         );
-
     }
 
 

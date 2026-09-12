@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-09-08T22:23:38+0530",
+    date = "2026-09-12T11:04:33+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
@@ -43,7 +43,6 @@ public class DoctorMapperImpl implements DoctorMapper {
         DepartmentResponseDeptDTO departmentResponseDeptDTO = new DepartmentResponseDeptDTO();
 
         departmentResponseDeptDTO.setId( dept.getId() );
-        departmentResponseDeptDTO.setDepartmentNames( dept.getName() );
         departmentResponseDeptDTO.setHeadDoctorName( dept.getHeadDoctorName() );
 
         return departmentResponseDeptDTO;

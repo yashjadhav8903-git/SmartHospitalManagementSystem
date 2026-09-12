@@ -14,6 +14,7 @@ public class AssignInsurancePatientResponseDTO {
 
     private Integer patientId;
     private String patientName;
+    private Integer insuranceId;
     private String providerName;
     private String policyNumber;
     private LocalDate validUntil;

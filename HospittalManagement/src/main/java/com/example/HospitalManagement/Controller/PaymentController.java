@@ -45,7 +45,7 @@ public class PaymentController {
 
 
     @PostMapping("/verify")
-    @Operation(summary = "Verify that Payment Record.")
+    @Operation(summary = "NOTE : please enter razorpayPaymentId : pay_test_123456 and razorpaySignature : TEST_PASS")
     public ResponseEntity<String> verifyPayment(@RequestBody VerifyPaymentRequestDTO
                                                          verifyPaymentRequestDTO){
 

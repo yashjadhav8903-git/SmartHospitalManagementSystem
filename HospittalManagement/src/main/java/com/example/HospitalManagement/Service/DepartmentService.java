@@ -16,7 +16,7 @@ import com.example.HospitalManagement.Projection.ForDepartments.DoctorProjection
 import com.example.HospitalManagement.Repository.DepartmentRepository;
 import com.example.HospitalManagement.Repository.DoctorRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,14 +85,14 @@ public class DepartmentService {
 
 
     //getDepartmentAndDoctorById
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('Department:Operations')")
     public DepartmentResponseDeptDTO getDepartmentAndDoctorById (Integer id , Pageable pageable) {
 
         log.debug("Fetching department and doctors for department ID {}", id);
 
-        // 1. fetch by Department
-        DepartmentProjectionDTO deptProjection = departmentRepository.findDepartmentProjectionById(id)
+        // 1. Fetch Department Entity directly (No projection/MapStruct headache)
+        Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Department not found with ID: " + id));
 
 
@@ -102,19 +102,26 @@ public class DepartmentService {
 
 
         // 3 . Department Mapping using MapStruct
-        DepartmentResponseDeptDTO responseDto = doctorMapper.DeptToDTO(deptProjection);
 
         // 4 . Doctor Mapping using MapStruct
         Page<DoctorResponseDeptDTO> doctorDTOPage = doctorpage.map(doctorMapper::DoctorToDTO);
 
+
+
+        // 3. Manual Mapping (100% control, zero surprises)
+        DepartmentResponseDeptDTO responseDto = new DepartmentResponseDeptDTO();
+        responseDto.setId(department.getId());
+        responseDto.setDepartmentNames(department.getName()); // Direct entity se uthaya
+        responseDto.setHeadDoctorName(department.getHeadDoctor() != null ? department.getHeadDoctor().getName() : null);
         responseDto.setDoctors(doctorDTOPage);
+
         return responseDto;
 
     }
 
 
     // --> FindAllDepartment with MapStruct
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('Department:Operations')")
     public Page<DepartmentNoIDResponseDTO> getAllDepartment(Pageable pageable) {
 

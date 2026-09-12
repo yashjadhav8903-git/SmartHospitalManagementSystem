@@ -12,7 +12,7 @@ public interface PatientInsuranceProjection {
     Integer getId();
     String getName();
     String getEmail();
-
+    Integer getInsuranceId();
     String getProvider();
     InsuranceType getInsuranceType();
     LocalDate  getValidUntil();

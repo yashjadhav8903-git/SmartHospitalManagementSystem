@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class Insurance {
 
 
     @GetMapping("/plans")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "About Insurance Plans Details")
     public ResponseEntity<List<InsurancePlanResponseDTO>> getPlans() {
         List<InsurancePlanResponseDTO> insurancePlans =
@@ -36,6 +38,7 @@ public class Insurance {
 
     @PostMapping("/patient/{patientId}")
     @Operation(summary = "Assign Insurance to the Patient")
+    @PreAuthorize("hasAuthority('Insurance:Operations')")
     public ResponseEntity<AssignInsurancePatientResponseDTO> assignInsurance(@RequestBody AssignInsuranceToPatientsRequestDTO
                                                                                          requestDTO,
                                                                              @PathVariable Integer patientId){
@@ -50,6 +53,7 @@ public class Insurance {
 
     @DeleteMapping("/remove")
     @Operation(summary = "Shut down that Insurance for some time")
+    @PreAuthorize("hasAuthority('Insurance:Read') or @patientInsurance.isInsuranceOwner(#patientId, authentication.name)")
     public ResponseEntity<String> softInsuranceRemove(@RequestParam Integer patientId) {
         insuranceService.cancelInsuranceForPatient(patientId);
         return ResponseEntity.ok().body("Insurance policy cancelled successfully for patient ID: " + patientId);
@@ -58,6 +62,7 @@ public class Insurance {
 
     @PostMapping("/reActiveInsurance")
     @Operation(summary = "ReActive that Insurance")
+    @PreAuthorize("hasAuthority('Insurance:Read') or @patientInsurance.isInsuranceOwner(#patientId, authentication.name)")
     public ResponseEntity<AssignInsurancePatientResponseDTO> reActiveInsurance(@RequestParam Integer patientId) {
         AssignInsurancePatientResponseDTO assignInsurancePatientResponseDTO =
                 insuranceService.reActiveInsurance(patientId);

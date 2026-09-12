@@ -17,6 +17,7 @@ public interface InsuranceMapper {
     // --> Entity to Response
     @Mapping(source = "patient.id",target = "patientId")
     @Mapping(source = "patient.name",target = "patientName")
+    @Mapping(source = "insurancePlan.id",target = "insuranceId")
     @Mapping(source = "insurancePlan.provider",target = "providerName")
     @Mapping(source = "insurancePlan.insuranceType",target = "insuranceType")
     AssignInsurancePatientResponseDTO EntityToResponse(PatientInsurance insurance);

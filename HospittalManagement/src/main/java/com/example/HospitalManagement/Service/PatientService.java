@@ -20,7 +20,7 @@ import com.example.HospitalManagement.Repository.RoleRepository;
 import com.example.HospitalManagement.SpringSecurity.AuthService;
 import com.example.HospitalManagement.Repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -52,7 +52,7 @@ public class PatientService {
     private final RedisTemplate<String, Object> redisTemplate;
 
 
-    @Transactional
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('Patient:Read')")
     @AuditLog(action = "Get_All:Patient", resource = "Patient")
     public PageResponseDTO<AllPatientDTO> getAllPatient(Pageable pageable) {
@@ -121,10 +121,10 @@ public class PatientService {
     }
 
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Cacheable(value = "patients",key = "#patientId")
-    @PreAuthorize("hasAuthority('Patient:Read') and #patientid == authentication.principal.id")
     @AuditLog(action = "Get_Patient:Id", resource = "Patient")
+    @PreAuthorize("hasAuthority('Insurance:Operations') or @patientSecurity.isPatientOwner(#patientId,authentication.name)")
     public AllPatientDTO getPatientById(Integer patientId) throws Exception {
 
         log.info("Fetching Patient Data from Database for PatientId: {}", patientId);
@@ -180,10 +180,19 @@ public class PatientService {
 }
 
     // -->GetAllPatientWithInsuranceWithMapstruct
-    @Transactional
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('Insurance:Read')")
     public Page<PatientInsuranceResponseDTO> getAllPatientWithInsurance(Pageable pageable){
             Page<PatientInsuranceProjection> page = patientRepository.getAllPatientWithInsurance(pageable);
             return page.map(patientMapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('Insurance:Read') or @patientSecurity.isPatientOwner(#patientId,authentication.name)")
+    public PatientInsuranceResponseDTO getPatientInsuranceById(Integer patientId) throws Exception {
+        PatientInsuranceProjection projection = patientRepository.getPatientInsuranceById(patientId)
+                .orElseThrow(() -> new PatientNotFoundException("Patient Insurance not found for ID: " + patientId));
+
+        return patientMapper.toDTO(projection);
     }
 }

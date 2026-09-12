@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +26,7 @@ public class Departments {
 
     @PostMapping("/assign-Department/{doctorId}")
     @Operation(summary = "assign department to doctor")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DoctorResponseDTO> assignDepartmentToDoctor(@PathVariable Integer doctorId ,
                                                                       @RequestBody AssignDepartmentRequestDTO assignDepartmentRequestDTO){
 
@@ -35,6 +37,7 @@ public class Departments {
     //--> findDoctorByDepartmentId
     @GetMapping("/{id}")
     @Operation(summary = "find Doctor By Department-Id")
+    @PreAuthorize("hasAuthority('Department:Operations')")
     public ResponseEntity<DepartmentResponseDeptDTO> getDepartmentAndDoctorById (@PathVariable Integer id,
                                                                                  Pageable pageable){
         return ResponseEntity.ok(departmentService.getDepartmentAndDoctorById(id,pageable));
@@ -44,6 +47,7 @@ public class Departments {
     //--> Find All Department (Same) with Mapstruct
     @GetMapping
     @Operation(summary = "find all department")
+    @PreAuthorize("hasAuthority('Department:Operations')")
     public ResponseEntity<Page<DepartmentNoIDResponseDTO>> getAllDepartment(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size) {

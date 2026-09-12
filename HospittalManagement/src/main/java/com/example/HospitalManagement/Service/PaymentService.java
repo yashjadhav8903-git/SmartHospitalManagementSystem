@@ -107,14 +107,23 @@ public class PaymentService {
         Payment payment = paymentRepository.findByRazorpayOrderId(requestDTO.getRazorpayOrderId())
                 .orElseThrow(() -> new RuntimeException("Payment record not found for Order ID: " + requestDTO.getRazorpayOrderId()));
 
-        if(!payment.getRazorpayOrderId().equals(requestDTO.getRazorpayOrderId())) {
-            throw new RuntimeException("RazorpayOrderId are not matching " +  requestDTO.getRazorpayOrderId());
-        }
+        boolean isVerified = false;
+
+        // 1. Interviewer / Frontend Bypass Check (YML secret bypass for smooth testing)
+        if ("TEST_PASS".equals(requestDTO.getRazorpaySignature())) {
+            log.warn("Payment verification bypassed using TEST_PASS token!");
+            isVerified = true;
+        }else {
 
         String payload = requestDTO.getRazorpayOrderId() + "|" + requestDTO.getRazorpayPaymentId();
         String generatedSignature = HmacUtils.hmacSha256Hex(razorpaySecret, payload);
 
-        if(generatedSignature.equals(requestDTO.getRazorpaySignature())) {
+            if (generatedSignature.equals(requestDTO.getRazorpaySignature())) {
+                isVerified = true;
+            }
+        }
+
+        if(isVerified) {
 
             // Payment Success Update
             payment.setRazorpayPaymentId(requestDTO.getRazorpayPaymentId());
@@ -126,10 +135,10 @@ public class PaymentService {
             // Call AppointmentService to confirm & send email
             appointmentService.confirmedAppointmentAfterPayment(payment.getAppointment().getId());
 
-            String name = payment.getAppointment().getPatient().getName();
 
-            return "Payment Verified Successfully & Appointment Confirmed! " +
-                    "Thank you, " + name + ". A confirmation receipt and details" +
+
+            return "Payment Verified Successfully & Appointment Confirmed ✅ " +
+                    "Thank you . A confirmation receipt and details" +
                     " have been sent to your registered email/phone number.";
 
 

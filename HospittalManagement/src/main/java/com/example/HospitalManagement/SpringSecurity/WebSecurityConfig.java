@@ -56,6 +56,10 @@ public class WebSecurityConfig {
                                 "/oauth2/**",
                                 "/login",
                                 "/",
+                                "/index.html",
+                                "/payment-ui",
+                                "/pay.html",       // 🔥 Agar file ka naam pay.html hai toh yeh add kar
+                                "/*.html",
                                 "/favicon.ico",
                                 "/login/oauth2/**",
                                 "/api/A2/schedule/**",

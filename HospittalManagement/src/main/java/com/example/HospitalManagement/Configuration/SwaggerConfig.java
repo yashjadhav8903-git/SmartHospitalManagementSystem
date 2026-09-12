@@ -24,12 +24,17 @@ public class SwaggerConfig {
 
         final String securitySchemeName = "bearerAuth";
 
-        // 1 Primary Load Balancer Server (Nginx on Port 80)
+        // 1. Production DuckDNS Server
+        Server productionServer = new Server()
+                .url("https://smart-hms-yash.duckdns.org")
+                .description("Production AWS Server (DuckDNS)");
+
+        // 2 Primary Load Balancer Server (Nginx on Port 80)
         Server loadBalancerServer = new Server()
                 .url("http://localhost")
                 .description("Nginx Load Balancer (Port 80 - Multi Instance)");
 
-        // 2 Direct Local Instance Server (Port 8080)
+        // 3 Direct Local Instance Server (Port 8080)
         Server directServer = new Server()
                 .url("http://localhost:8080")
                 .description("Direct Local Server (Port 8080 - Single Instance)");
@@ -43,7 +48,7 @@ public class SwaggerConfig {
 
 
                 // Swagger UI Dropdown me dono servers visible rahenge
-                .servers(List.of(loadBalancerServer, directServer))
+                .servers(List.of(productionServer,loadBalancerServer, directServer))
 
 
                 //Global JWT Security Setup for Swagger UI

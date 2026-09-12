@@ -12,9 +12,15 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface DepartmentMapper {
 
-    //1 --> DepartmentProjection to DepartmentNOIDResponseDTO
+    //1 --> DepartmentProjection to DepartmentNO-IDResponseDTO
     DepartmentNoIDResponseDTO ProjectionToDTO(DepartmentProjectionDTO departmentProjectionDTO);
 
     //3 --> Entity to Response
+    @Mapping(target = "departmentNames", source = "departments")
     DoctorResponseDTO EntityTOUser(Doctor doctor);
+
+
+    default String mapDepartmentToString(Department department) {
+        return department != null ? department.getName() : null;
+    }
 }

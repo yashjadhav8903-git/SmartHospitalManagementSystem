@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -18,6 +19,8 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     // PatientRepository.java
     boolean existsByUserEntityId(Integer userId);
 
+    boolean existsByIdAndUserEntityUsername(Integer id, String username);
+
     //--> Pagination
     @NotNull Page<Patient> findAll(@NotNull Pageable pageable);
 
@@ -28,19 +31,39 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
 
 
 
-    // // -->GetAllPatientWithInsuranceWithMapstruct
+    // // -->GetAllPatientWithInsuranceWithMapstructs
+    @Query("""
+
+            select p.id as id,
+                        p.name as name,
+                        p.email as email,
+                        pi.id as insuranceId,
+                        ins.provider as provider,
+                        ins.insuranceType as insuranceType,
+                        pi.validUntil as validUntil,
+                        pi.createdAt as createdAt
+                        from Patient p
+                        left join PatientInsurance pi on p.id = pi.patient.id
+                        left join pi.insurancePlan ins
+            """)
+    Page<PatientInsuranceProjection> getAllPatientWithInsurance(Pageable pageable);
+
+
     @Query("""
             select p.id as id,
             p.name as name,
             p.email as email,
-            i.insurancePlan.provider as provider,
-            i.insurancePlan.insuranceType as insuranceType,
-            i.validUntil as validUntil,
-            i.createdAt as createdAt
+            pi.id as insuranceId,
+            ins.provider as provider,
+            ins.insuranceType as insuranceType,
+            pi.validUntil as validUntil,
+            pi.createdAt as createdAt
             from Patient p
-            left join p.insurance i
+            left join PatientInsurance pi on p.id = pi.patient.id
+            left join pi.insurancePlan ins
+            where p.id = :patientId
             """)
-    Page<PatientInsuranceProjection> getAllPatientWithInsurance(Pageable pageable);
+    Optional<PatientInsuranceProjection> getPatientInsuranceById(@Param("patientId") Integer patientId);
 
 
 }

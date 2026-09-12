@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-09-08T22:23:38+0530",
+    date = "2026-09-12T14:28:45+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.12 (Microsoft)"
 )
 @Component
@@ -127,6 +127,7 @@ public class PatientMapperImpl implements PatientMapper {
 
         InsuranceResponseDTO insuranceResponseDTO = new InsuranceResponseDTO();
 
+        insuranceResponseDTO.setInsuranceId( patientInsuranceProjection.getInsuranceId() );
         insuranceResponseDTO.setProvider( patientInsuranceProjection.getProvider() );
         insuranceResponseDTO.setValidUntil( patientInsuranceProjection.getValidUntil() );
         insuranceResponseDTO.setInsuranceType( patientInsuranceProjection.getInsuranceType() );

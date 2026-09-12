@@ -14,4 +14,6 @@ public interface PatientInsuranceRepository extends JpaRepository<PatientInsuran
 
     Optional<PatientInsurance> findByPatientId(Integer patientId);
 
+    boolean existsByPatientIdAndPatientUserEntityUsername(Integer patientId, String username);
+
 }

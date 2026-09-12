@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,14 +33,15 @@ public class Doctors {
     // ---> getDepartmentAndDoctorById
     @GetMapping("/{id}")
     @Operation(summary = "get doctor with Department by doctor id")
-    public ResponseEntity<Page<DoctorResponseDTOView>> getDoctorById(@PathVariable Integer id,
+    @PreAuthorize("hasAuthority('Doctor:Read')")
+    public ResponseEntity<Page<DoctorResponseDTOView>> getDoctorById(@PathVariable Integer doctorId,
                                                                      @RequestParam (defaultValue = "0")int page,
-                                                                     @RequestParam (defaultValue = "2")int size){
+                                                                        @RequestParam (defaultValue = "2")int size){
 
-        log.info("Fetch Doctor By Id Request Received from : {}", id);
+        log.info("Fetch Doctor By Id Request Received from : {}", doctorId);
 
         Pageable pageable = PageRequest.of(page,size);
-        Page<DoctorResponseDTOView> doctorsResponse = doctorService.getDoctorsById(id, pageable);
+        Page<DoctorResponseDTOView> doctorsResponse = doctorService.getDoctorsById(doctorId, pageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -49,6 +51,7 @@ public class Doctors {
     // --> Find All Doctor's
     @GetMapping
     @Operation(summary = "get all doctor information")
+    @PreAuthorize("hasAuthority('Doctor:Read')")
     public ResponseEntity<Page<DoctorResponseDTOView>> getAllDoctors(@RequestParam (defaultValue = "0") int page,
                                                                      @RequestParam(defaultValue = "5") int size){
         log.info("Fetch Doctor's Request Received from : {}", page);
@@ -59,6 +62,7 @@ public class Doctors {
     // 1 --> getAppointmentWithProjection
     @GetMapping("/appointments/{doctorId}")
     @Operation(summary = "get doctor appointment with doctor-Id")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and @appointmentSecurity.isDoctorOwner(#doctorId,authentication.name))")
     public ResponseEntity<List<AppointmentResponseDTO>> getAppointment(@PathVariable Integer doctorId){
 
         List<AppointmentResponseDTO> appointmentDoctor =

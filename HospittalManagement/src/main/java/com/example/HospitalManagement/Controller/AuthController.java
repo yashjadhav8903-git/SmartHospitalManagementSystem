@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/v5/auth")
-@Tag(name = "Authentication-API's")
+@Tag(name = "User Authentication-API's")
 public class AuthController {
 
     private final AuthService authService;
@@ -39,6 +39,7 @@ public class AuthController {
 
     // RefreshToken Controller
     @PostMapping("/refresh")
+    @Operation(summary = "For Refresh-Token generation.")
     public ResponseEntity<LoginResponseDTO> refresh(@RequestBody RefreshRequestDTO request) {
         log.info("Refresh Request Received from : {}", request);
         return ResponseEntity.ok(authService.refresh(request));

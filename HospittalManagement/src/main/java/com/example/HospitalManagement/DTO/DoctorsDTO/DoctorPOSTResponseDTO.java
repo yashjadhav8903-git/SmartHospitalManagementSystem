@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DoctorPOSTResponseDTO {
 
-    private Integer userId;
+    private Integer DoctorId;
     private String name;
     private  String specialization;
     private String email;

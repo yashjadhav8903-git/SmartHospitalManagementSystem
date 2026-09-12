@@ -32,8 +32,11 @@ public class Appointments {
     // 1 --> getAppointmentWithProjection
     @GetMapping("/doctor/{doctorId}")
     @Operation(summary = "find Appointment by there Doctor id")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') @appointmentSecurity.isDoctorOwner(#doctorId,authentication.name))")  //---> Ye hi hota hai Ownership Based Access Control
     public ResponseEntity<AppointmentPageResponseDTO<AppointmentResponseDTO>> getAppointmentByDoctorId(@PathVariable Integer doctorId,
-                                                                                                       @PageableDefault(page = 0, size = 10, sort = "appointmentTime",
+                                                                                                       @PageableDefault(page = 0,
+                                                                                                               size = 10,
+                                                                                                               sort = "appointmentTime",
                                                                                                                direction = Sort.Direction.DESC) Pageable pageable){
         log.info("getAppointments Request Received from Doctor-Id : {}", doctorId);
         return ResponseEntity.ok(appointmentService.getAppointments(pageable, doctorId));
@@ -41,6 +44,7 @@ public class Appointments {
 
     @GetMapping("/patient/{patientId}")
     @Operation(summary = "find Appointment by there Patient Id")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('PATIENT') and @appointmentSecurity.isPatientOwner(#patientId,authentication.name))")
     public ResponseEntity<AppointmentPageResponseDTO<AppointmentResponseDTO>> getAppointmentByPatientId(@PathVariable Integer patientId,
                                                                                                         @PageableDefault(page = 0, size = 10, sort = "appointmentTime",
                                                                                                                 direction = Sort.Direction.DESC) Pageable pageable){
@@ -56,7 +60,8 @@ public class Appointments {
 
     //2 ---> CreateNewAppointment API's with MapStruct
     @PostMapping("/book-Appointment")
-    @Operation(summary = "Book-Appointment's without Patient Registor")
+    @Operation(summary = "Book-Appointment's without Patient Register")
+    @PreAuthorize("hasAuthority('Appointment:Write')")
     public ResponseEntity<CreateAppointmentResponseDTO> CreateAppointment(@RequestBody CreateAppointmentRequestDTO
                                                                                 requestDTO) throws IllegalAccessException, MessagingException {
 
@@ -72,6 +77,7 @@ public class Appointments {
     //3 ---> ReAssign Appointment TO NewDoctor
     @PutMapping("/reAssign/{patientId}")
     @Operation(summary = "ReAssign Appointment TO NewDoctor using patient-ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AppointmentReAssignResponseDTO> ReAssignDoctor(@RequestBody AppointmentReAssignRequestDTO
                                                                      appointmentReAssignRequestDTO,
                                                          @PathVariable Integer patientId){
@@ -89,6 +95,8 @@ public class Appointments {
     //4 ---> Cancel Appointment
     @PostMapping("/cancel")
     @Operation(summary = "Cancel the Appointment")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('PATIENT') and @appointmentSecurity" +
+            ".isAppointmentOwnerForPatient(#cancelAppointmentRequestDTO.appointmentId,authentication.name))")
     public ResponseEntity<CancelAppointmentResponseDTO> CancelAppointment(@RequestBody @NotNull CancelAppointmentRequestDTO
                                                                                       cancelAppointmentRequestDTO){
 
@@ -105,6 +113,7 @@ public class Appointments {
 
     @PostMapping("/Reschedule")
     @Operation(summary = "Reschedule the Appointment to new slot")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> rescheduleAppointment (@RequestBody RescheduleRequestDTO
                                                                  rescheduleRequestDTO){
 

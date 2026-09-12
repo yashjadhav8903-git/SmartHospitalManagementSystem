@@ -34,6 +34,7 @@ public class Admin {
     // --> PostAPI's
     @PostMapping
     @Operation(summary = "OnBoarding new Doctor by Admin Only.")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DoctorPOSTResponseDTO> CreateNewDoctor(@RequestBody DoctorPOSTRequestDTO
                                                                               doctorPOSTRequestDTO){
         log.info("DoctorOnBoarding Request Received from : {}", doctorPOSTRequestDTO.getUserId());

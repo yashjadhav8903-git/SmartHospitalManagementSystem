@@ -15,7 +15,7 @@ public class DoctorResponseDTO {
     private String name;
     private String specialization;
     private String email;
-    private Set<AssignDepartmentRequestDTO> DepartmentNames;
+    private Set<String> departmentNames;
 
 
 }

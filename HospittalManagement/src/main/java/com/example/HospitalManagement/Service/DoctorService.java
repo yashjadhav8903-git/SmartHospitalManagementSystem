@@ -15,7 +15,7 @@ import com.example.HospitalManagement.Projection.ForDoctors.DoctorProjectionView
 import com.example.HospitalManagement.Repository.DoctorRepository;
 import com.example.HospitalManagement.Repository.RoleRepository;
 import com.example.HospitalManagement.Repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -42,15 +42,15 @@ public class DoctorService {
 
 
     // --> projection + Pageable + byDoctorById
-    @Transactional
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "doctors" , key = "#id + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    @PreAuthorize("hasAuthority('Doctor:Read') and #id == authentication.principal.id")
+    @PreAuthorize("hasAuthority('Doctor:Read')")
     @AuditLog(action = "get_Doctor:Id", resource = "Doctor")
-    public Page<DoctorResponseDTOView> getDoctorsById(Integer id , Pageable pageable){
-        log.info("Fetching Doctor with ID: {}",id);
-        System.out.println("🔥 DATABASE HIT - Fetching Doctor from DB" + id);
+    public Page<DoctorResponseDTOView> getDoctorsById(Integer doctorId , Pageable pageable){
+        log.info("Fetching Doctor with ID: {}",doctorId);
+        System.out.println("🔥 DATABASE HIT - Fetching Doctor from DB" + doctorId);
 
-        Page<DoctorProjectionView> page = doctorRepository.findById(id,pageable);
+        Page<DoctorProjectionView> page = doctorRepository.findById(doctorId,pageable);
         return page .map( doctor -> new DoctorResponseDTOView(
                     doctor.getId(),
                 doctor.getName(),
@@ -66,7 +66,7 @@ public class DoctorService {
 
 
     // --> All Doctor
-    @Transactional
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('Doctor:Read')")
     public Page<DoctorResponseDTOView> getAllDoctors(Pageable pageable){
 

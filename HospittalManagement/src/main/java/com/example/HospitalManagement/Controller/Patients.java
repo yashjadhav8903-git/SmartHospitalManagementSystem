@@ -82,11 +82,22 @@ public class Patients {
 
     // -->GetAllPatientWithInsuranceWithMapstruct
     @GetMapping("/patientInsurance")
-    @Operation(summary = "get Patient with Insurance.")
+    @Operation(summary = "get All Patient with Insurance.")
     public ResponseEntity<Page<PatientInsuranceResponseDTO>> getAllPatientAndInsurance(@RequestParam(defaultValue = "0")int page,
                                                                                        @RequestParam(defaultValue = "5") int size){
         Pageable pageable = PageRequest.of(page,size, Sort.Direction.ASC,"p.id");
         return ResponseEntity.ok(patientService.getAllPatientWithInsurance(pageable));
+    }
+
+    @GetMapping("/{patientId}")
+    @Operation(summary = "get PatientInsurance By Patient-Id")
+    public ResponseEntity<PatientInsuranceResponseDTO> getPatientInsuranceByPatientId(@PathVariable Integer patientId) throws Exception {
+        PatientInsuranceResponseDTO patientInsuranceById =
+                patientService.getPatientInsuranceById(patientId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(patientInsuranceById);
     }
 
     @PostMapping("/register")
