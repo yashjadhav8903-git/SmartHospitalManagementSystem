@@ -1,6 +1,63 @@
 # 🏥 SmartHospital Management System (Spring Boot)
 
-A backend-based Hospital Management System built using **Spring Boot**, focusing on secure authentication, scalable architecture, and real-world production practices.
+> A high-performance, containerized, production-ready Monolithic Hospital Management System built with enterprise-grade Java backend technologies, load balancing, and automated SSL security.
+---
+
+## 🏗️ System Architecture Diagram
+
+The application is deployed on an **AWS EC2** instance, orchestrated via **Docker Compose**, and fronted by an **Nginx** reverse proxy handling SSL termination and load balancing across dual Spring Boot instances.
+
+```text
+ [ User / Browser ] (HTTPS via smart-hms-yash.duckdns.org)
+         │
+         │  (Port 443 / SSL Encrypted Traffic)
+         ▼
+ ┌────────────────────────────────────────────────────────┐
+ │                      AWS EC2 Server                    │
+ │                                                        │
+ │   ┌────────────────────────────────────────────────┐   │
+ │   │               Docker Network                   │   │
+ │   │                                                │   │
+ │   │   [ Nginx Reverse Proxy / Load Balancer ]      │   │
+ │   │         (Container: hospital-nginx-lb)         │   │
+ │   │         - Port 80 (HTTP ──> Redirect to 443)   │   │
+ │   │         - Port 443 (HTTPS + SSL Certificates)  │   │
+ │   │                       │                        │   │
+ │   │         ┌─────────────┴─────────────┐          │   │
+ │   │         ▼                           ▼          │   │
+ │   │   [ App Instance 1 ]      [ App Instance 2 ]       │   │
+ │   │    (Spring Boot:8080)      (Spring Boot:8080)      │   │
+ │   │         │                           │          │   │
+ │   │         └─────────────┬─────────────┘          │   │
+ │   │                       │                        │   │
+ │   │       ┌───────────────┼───────────────┐        │   │
+ │   │       ▼               ▼               ▼        │   │
+ │   │  [ PostgreSQL ]    [ Redis ]    [ RabbitMQ ]   │   │
+ │   │   (Database)      (Caching)     (Async Msg)    │   │
+ │   │                                                │   │
+ │   └────────────────────────────────────────────────┘   │
+ └────────────────────────────────────────────────────────┘
+
+
+🔄 Appointment Booking Workflow (Sequence Flow)
+How a patient appointment flows through the high-performance backend architecture:
+
+
+[ Patient / UI ] 
+       │
+       ▼ (1. POST /api/appointments/book)
+ [ Nginx Load Balancer ]
+       │
+       ▼ (2. Routes traffic round-robin)
+ [ Spring Boot App Instance ]
+       │
+       ├─► (3. Validates Slot Availability via Redis Cache)
+       ├─► (4. Persists Appointment & Transaction in PostgreSQL)
+       ├─► (5. Publishes Booking Event to RabbitMQ Queue) ──► [ Async Email Worker ]
+       │
+       ▼ (6. Returns 201 Created & Booking Confirmation)
+ [ Patient / UI ]
+
 
 ---
 
@@ -18,30 +75,33 @@ A backend-based Hospital Management System built using **Spring Boot**, focusing
 
 ---
 
-        ## 🛠️ Tech Stack
+        ## 🛠️ Tech Stack & Core Features
 
 * **Language:** Java 17+
 * **Framework:** Spring Boot 3.x
 * **Security:** Spring Security, JWT, OAuth2
-* **Database:** PostgreSQL
-* **Caching:** Redis
+* **Database & Caching: PostgreSQL (Relational Data), Redis (Token storage & slot caching)
+* **Load Balancing & Security: Nginx, Let's Encrypt SSL/TLS (HTTPS enabled)
 * **Build Tool:** Maven
-* **API Testing:** Postman
-* **Messaging:** Gmail
+* **Monitoring & Metrics: Prometheus & Grafana dashboards
+* **Messaging & Async Processing: RabbitMQ (Asynchronous confirmation and cancellation emails)
+* **Deployment Infrastructure: AWS EC2 (Ubuntu), Docker & Docker Compose
 
 ---
 
-        ## 📂 Project Structure
+        ## Project Directory Structure
 
 ```
-src/
-        ├── controller/
-        ├── service/
-        ├── repository/
-        ├── entity/
-        ├── security/
-        ├── config/
-        └── exception/
+SmartHospitalManagementSystem/
+│
+├── HospittalManagement/
+│   ├── src/                  # Spring Boot Source Code (Controllers, Services, Repositories)
+│   ├── Dockerfile            # Multi-stage build for Spring Boot application container
+│   ├── docker-compose.yml    # Multi-container orchestration (App, DB, Cache, Broker, Monitoring)
+│   ├── nginx.conf            # Reverse proxy, load balancing & SSL configuration
+│   └── pom.xml               # Maven dependencies (Spring Security, Data JPA, etc.)
+│
+└── README.md                 # Project Documentation
         ```
 
         ---
@@ -52,71 +112,13 @@ src/
 
 ```
 git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.git <br>
-cd your-repo-name
+cd SmartHospitalManagementSystem/HospittalManagement
 ```
 
-        ### 2️⃣ Configure application.yml
-spring:
-datasource:
-url: jdbc:postgresql://localhost:5432/hms_db
-username: your_username
-password: your_password
-
-Update your database and Redis config:
-
-        ```
-spring.datasource.url=your-db-url
-spring.datasource.username=your-username
-spring.datasource.password=your-password
-
-spring.redis.host=localhost
-spring.redis.port=6379
-        ```
-
-
-  ### 3️⃣ Run the application
-        mvn spring-boot:run
-```
-
-
-        
-## 4️⃣ Environment Variables:
-OAuth aur Email ke liye ye variables set karein:
-
-1. GOOGLE_CLIENT_ID
-2. GOOGLE_CLIENT_SECRET
-3. EMAIL_PASSWORD (App Password)
-
-
-## 🔐 Authentication Flow
-
-1. User logs in → receives JWT + Refresh Token
-2. JWT used for API access
-3. Refresh Token stored in Redis
-4. Logout → Refresh Token invalidated from Redis
+   ## Access the Application:
+  - API Documentation (Swagger UI): https://smart-hms-yash.duckdns.org/doc
 
 ---
-
-        ## 📌 API Endpoints (Sample)
-
-        | Method | Endpoint          | Description |
-        | ------ | ----------------- | ----------- |
-        | POST   | /auth/v5/login    | User login  |
-        | POST   | /auth/v5/register | User signup |
-        | POST   | /auth/v5/refresh  | Refresh JWT |
-        | POST   | /auth/v5/logout   | Logout user |
-
-        ---
-
-        ## 💡 Highlights
-
-
-* Implemented **Redis-based session management**
-* Designed **secure authentication system**
-* Followed **clean architecture principles**
-* Built with **scalability in mind**
-
-        ---
 
         ## 📈 Future Improvements
 
