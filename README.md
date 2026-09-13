@@ -5,6 +5,7 @@
 
    ## Access the Application on AWS EC2:
   - API Documentation (Swagger UI): https://smart-hms-yash.duckdns.org/doc
+---
 
 ## 🏗️ System Architecture Diagram
 
