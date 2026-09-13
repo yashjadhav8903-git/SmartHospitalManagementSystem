@@ -42,6 +42,8 @@ The application is deployed on an **AWS EC2** instance, orchestrated via **Docke
  │   └────────────────────────────────────────────────┘   │
  └────────────────────────────────────────────────────────┘
 
+---
+
 
 🔄 Appointment Booking Workflow (Sequence Flow)
 How a patient appointment flows through the high-performance backend architecture:
