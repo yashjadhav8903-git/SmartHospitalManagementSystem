@@ -3,6 +3,9 @@
 > A high-performance, containerized, production-ready Monolithic Hospital Management System built with enterprise-grade Java backend technologies, load balancing, and automated SSL security.
 ---
 
+   ## Access the Application on AWS EC2:
+  - API Documentation (Swagger UI): https://smart-hms-yash.duckdns.org/doc
+
 ## 🏗️ System Architecture Diagram
 
 The application is deployed on an **AWS EC2** instance, orchestrated via **Docker Compose**, and fronted by an **Nginx** reverse proxy handling SSL termination and load balancing across dual Spring Boot instances.
@@ -89,9 +92,9 @@ How a patient appointment flows through the high-performance backend architectur
 
 ---
 
+```
         ## Project Directory Structure
 
-```
      SmartHospitalManagementSystem/
      │
      ├── HospittalManagement/
@@ -115,12 +118,8 @@ git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.gi
 cd SmartHospitalManagementSystem/HospittalManagement
 ```
 
-   ## Access the Application:
-  - API Documentation (Swagger UI): https://smart-hms-yash.duckdns.org/doc
-
 ---
 
-        ## 📈 Future Improvements
         
  ## 🔮 Future Improvements & Roadmap
 
