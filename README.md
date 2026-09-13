@@ -92,21 +92,21 @@ How a patient appointment flows through the high-performance backend architectur
         ## Project Directory Structure
 
 ```
-SmartHospitalManagementSystem/
-│
-├── HospittalManagement/
-│   ├── src/                  # Spring Boot Source Code (Controllers, Services, Repositories)
-│   ├── Dockerfile            # Multi-stage build for Spring Boot application container
-│   ├── docker-compose.yml    # Multi-container orchestration (App, DB, Cache, Broker, Monitoring)
-│   ├── nginx.conf            # Reverse proxy, load balancing & SSL configuration
-│   └── pom.xml               # Maven dependencies (Spring Security, Data JPA, etc.)
-│
-└── README.md                 # Project Documentation
+     SmartHospitalManagementSystem/
+     │
+     ├── HospittalManagement/
+     │   ├── src/                  # Spring Boot Source Code (Controllers, Services, Repositories)
+     │   ├── Dockerfile            # Multi-stage build for Spring Boot application container
+     │   ├── docker-compose.yml    # Multi-container orchestration (App, DB, Cache, Broker, Monitoring)
+     │   ├── nginx.conf            # Reverse proxy, load balancing & SSL configuration
+     │   └── pom.xml               # Maven dependencies (Spring Security, Data JPA, etc.)
+     │
+     └── README.md                 # Project Documentation
         ```
 
-        ---
+   ---
 
-        ## ⚙️ Setup & Run
+      
 
 ### 1️⃣ Clone the repository
 
@@ -121,10 +121,16 @@ cd SmartHospitalManagementSystem/HospittalManagement
 ---
 
         ## 📈 Future Improvements
+        
+ ## 🔮 Future Improvements & Roadmap
 
-- 🌐 Deploy the application on cloud platforms (AWS / Render / Railway)
-- 🚀 Make APIs live and accessible over the web
-- 📄 Integrate Swagger for API documentation
+* **Dedicated Frontend Application:** 
+  * Build a modern, responsive Single Page Application (SPA) using **React.js / Next.js** and **Tailwind CSS** to replace the default Swagger/Thymeleaf UI.
+  * Implement role-based dashboards for **Patients**, **Doctors**, and **Admins** with secure JWT and OAuth2 session management.
+* **Real-Time Notifications:** 
+  * Integrate **WebSockets (Spring WebSocket)** to push real-time appointment status updates and emergency notifications to clients.
+* **Container Orchestration:** 
+  * Deploy the multi-container stack onto **AWS EKS (Elastic Kubernetes Service)** with auto-scaling policies to handle traffic spikes beyond 50k+ RPS.
 
 ---
 
