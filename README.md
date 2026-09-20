@@ -1,5 +1,10 @@
 # 🏥 SmartHospital Management System (Spring Boot)
 
+![Java 21](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=java)
+![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.x-green?style=for-the-badge&logo=springboot)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge&logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-7.x-red?style=for-the-badge&logo=redis)
+
 > A high-performance, containerized, production-ready Monolithic Hospital Management System built with enterprise-grade Java backend technologies, load balancing, and automated SSL security.
 ---
 
