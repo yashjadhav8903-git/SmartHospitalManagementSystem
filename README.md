@@ -14,7 +14,7 @@
   - API Documentation (Swagger UI): https://smart-hms-yash.duckdns.org/doc
 ---
 
-## 🏗️ System Architecture Diagram
+##  System Architecture Diagram
 
 The application is deployed on an **AWS EC2** instance, orchestrated via **Docker Compose**, and fronted by an **Nginx** reverse proxy handling SSL termination and load balancing across dual Spring Boot instances.
 
@@ -74,21 +74,21 @@ How a patient appointment flows through the high-performance backend architectur
 
 ---
 
-        ## 🚀 Features
+        ##  Features
 
-* 🔐 JWT Authentication (Login / Signup)
-* 🔄 Refresh Token Implementation
-* 🔑 Google OAuth2 Login
-* ⚡ Redis Caching for performance
-* 🚪 Secure Logout (Token invalidation using Redis)
-* 🧠 Role-Based Authorization (Admin, Doctor, Patient)
-* 📦 RESTful APIs
-* 🛡️ Global Exception Handling
-* 📊 Structured Logging
+*  JWT Authentication (Login / Signup)
+*  Refresh Token Implementation
+*  Google OAuth2 Login
+*  Redis Caching for performance
+*  Secure Logout (Token invalidation using Redis)
+*  Role-Based Authorization (Admin, Doctor, Patient)
+*  RESTful APIs
+*  Global Exception Handling
+*  Structured Logging
 
 ---
 
-        ## 🛠️ Tech Stack & Core Features
+        ##  Tech Stack & Core Features
 
 * **Language:** Java 17+
 * **Framework:** Spring Boot 3.x
@@ -121,7 +121,7 @@ How a patient appointment flows through the high-performance backend architectur
 
       
 
-### 1️⃣ Clone the repository
+### 1️ Clone the repository
 
 ```
 git clone https://github.com/yashjadhav8903-git/SmartHospitalManagementSystem.git <br>
@@ -131,7 +131,7 @@ cd SmartHospitalManagementSystem/HospittalManagement
 ---
 
         
- ## 🔮 Future Improvements & Roadmap
+ ##  Future Improvements & Roadmap
 
 * **Dedicated Frontend Application:** 
   * Build a modern, responsive Single Page Application (SPA) using **React.js / Next.js** and **Tailwind CSS** to replace the default Swagger/Thymeleaf UI.
